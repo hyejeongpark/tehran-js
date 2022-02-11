@@ -13,7 +13,7 @@ Under development, do not use for production
 </body>
 ```
 
-2) Get the `otp_id` and `link` property from the Tehran API response
+2) Get the `otp_id` and `link` property from the Tehran API response and return to the Front End
 
 3) Show the OTP form
 
@@ -24,7 +24,41 @@ var otp_url = response.link;
 getotp.showOtpForm(otp_url);
 ```
 
-## ADD TRUSTED ORIGINS
+## HANDLING OTP SUCCESS and OTP FAILED CALLBACK
+
+1) Once the OTP process has been completed, client will receive a callback
+
+2) To handle OTP success, developer need to define inside the script `otpSuccess(payload)`
+
+```
+function otpSuccess(payload) {
+
+    let callback_otp_id = payload.otp_id;
+    let redirect_url = payload.redirect_url;
+
+    // do something
+}
+
+window.otpSuccess = otpSuccess;
+```
+
+3) To handle OTP failed, developer need to define inside the script `otpFailed(payload)`
+
+```
+function otpFailed(payload) {
+
+    let callback_otp_id = payload.otp_id;
+    let redirect_url = payload.redirect_url;
+
+    // do something
+}
+
+window.otpFailed = otpFailed;
+```
+
+4) To customize the callback function name, refer the CUSTOMIZE OPTIONS section below
+
+## ADD TRUSTED ORIGIN
 
 1) If you are developing on staging or local Tehran server, you must add your server url as trusted origin before showing the OTP form
 
