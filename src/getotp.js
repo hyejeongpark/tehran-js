@@ -7,25 +7,34 @@
 
         // initial object
 
-        var getotp_object = {
-            'settings': {
-                'iframe_container_id': 'getotp_iframe_parent',
-                'iframe_container_class': '',
-                'iframe_id': 'getotp_iframe',
-                'iframe_class': '',
-                'success_callback_function': 'otpSuccess',
-                'failed_callback_function': 'otpFailed',
-                'url_storage_key': 'getotp_form_url',
-                'trusted_origins': [
-                    'https://otp.dev',
-                ],
-            }
+        var settings = {
+            'iframe_container_id': 'getotp_iframe_parent',
+            'iframe_container_class': '',
+            'iframe_id': 'getotp_iframe',
+            'iframe_class': '',
+            'success_callback_function': 'otpSuccess',
+            'failed_callback_function': 'otpFailed',
+            'url_storage_key': 'getotp_form_url',
+
         };
 
-        var css_rules = 'div#' + getotp_object.iframe_container_id + ' { position: fixed; bottom: 0; width: 100%; background-color: white; } div#' + getotp_object.iframe_container_id + ' iframe { border: 0; }';
+        var getotp_object = {
+            'settings': settings,
+            'trusted_origins': [
+                'https://otp.dev',
+            ],
+        };
 
-        getotp_object['settings']['css_rules'] = css_rules;
+        function prepareStyle() {
+            return 'div#' + getotp_object.settings.iframe_container_id + ' { position: fixed; bottom: 0; width: 100%; background-color: white; } div#' + getotp_object.settings.iframe_container_id + ' iframe { border: 0; }';
+        }
 
+        function setStyle() {
+            var css_rules = prepareStyle();
+            getotp_object['settings']['css_rules'] = css_rules;
+        }
+
+        setStyle();
         // end initial object
 
         // use init to custom config
@@ -36,6 +45,10 @@
             for (key in options) {
                 if (this.settings.hasOwnProperty(key)) {
                     this.settings[key] = options[key];
+
+                    if (key === 'iframe_container_id') {
+                        setStyle();
+                    }
                 }
             }
 
@@ -56,7 +69,7 @@
             var client_origin = window.location.origin;
 
             if (event.origin != client_origin) {
-                if (!getotp_object['settings']['trusted_origins'].includes(event.origin)) {
+                if (!getotp_object['trusted_origins'].includes(event.origin)) {
                     console.error('Server callback failed because event origin ' + event.origin + ' is not define inside trusted_origins');
                     return;
                 }
@@ -182,8 +195,8 @@
         // for development purpose
 
         getotp_object.addOrigin = function (origin) {
-            this.settings.trusted_origins.push(origin);
-            return this.settings.trusted_origins;
+            this.trusted_origins.push(origin);
+            return this.trusted_origins;
         }
 
         getotp_object.clearSession = function () {
