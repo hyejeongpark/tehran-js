@@ -94,20 +94,20 @@
 
             if (status === 'success') {
 
-                if (typeof (window[getotp_object.success_callback_function]) == "function") {
-                    window[getotp_object.success_callback_function].call(null, payload);
+                if (typeof (window[getotp_object['settings'].success_callback_function]) == "function") {
+                    window[getotp_object['settings'].success_callback_function].call(null, payload);
                 }
                 else {
-                    console.error('To handle OTP success callback, please define function ' + getotp_object.success_callback_function + '(payload)');
+                    console.error('To handle OTP success callback, please define function ' + getotp_object['settings'].success_callback_function + '(payload)');
                 }
             }
             else if (status === 'fail') {
 
-                if (typeof (window[getotp_object.failed_callback_function]) == "function") {
-                    window[getotp_object.failed_callback_function].call(null, payload);
+                if (typeof (window[getotp_object['settings'].failed_callback_function]) == "function") {
+                    window[getotp_object['settings'].failed_callback_function].call(null, payload);
                 }
                 else {
-                    console.error('To handle OTP error callback, please define function ' + getotp_object.failed_callback_function + '(payload)');
+                    console.error('To handle OTP error callback, please define function ' + getotp_object['settings'].failed_callback_function + '(payload)');
                 }
 
             }
