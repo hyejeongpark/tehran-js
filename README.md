@@ -99,3 +99,100 @@ getotp.init(custom_settings);
 // show the otp form
 getotp.showOtpForm(otp_url);
 ```
+
+## USAGE WITH AJAX EXAMPLES
+
+1) With jQuery Ajax
+
+```
+function submitVerify() {
+    
+    var payload = { 
+        amount: 200,
+        trans_id: 'asd4i4sd123'
+    };
+
+    var api_url = 'https://yoursite.test/transfers/verify/';
+    
+    return $.ajax({
+            method: "POST",
+            url: api_url,
+            data: payload
+        })
+        .done(function( response ) {
+            var otp_id = response.otp_id;
+            var otp_url = response.link;
+
+            // show the OTP form
+            getotp.showOtpForm(otp_url);
+        });
+}
+
+// trigger
+submitVerify();
+```
+
+2) With Axios
+
+```
+function submitVerify() {
+
+    var payload = { 
+        amount: 200,
+        trans_id: 'asd4i4sd123'
+    };
+
+    var api_url = 'https://yoursite.test/transfers/verify/';
+
+    return axios
+        .post(api_url, payload)
+        .then(response => {
+            var otp_id = response.otp_id;
+            var otp_url = response.link;
+
+            // show the OTP form
+            getotp.showOtpForm(otp_url);
+        })
+}
+
+// trigger
+submitVerify();
+```
+
+3) With Fetch
+
+```
+
+function submitVerify() {
+
+    let payload = { 
+        amount: 200,
+        trans_id: 'asd4i4sd123'
+    };
+
+    let api_url = 'https://yoursite.test/transfers/verify/';
+
+    fetch(api_url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    })
+    .then(response => response.json())
+    .then(data => {
+
+        let otp_id = data.otp_id;
+        let otp_url = data.link;
+
+        // show the OTP form
+        getotp.showOtpForm(otp_url);
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+}
+
+// trigger
+submitVerify();
+```
