@@ -1,3 +1,5 @@
+'use strict';
+
 (function (window) {
     // You can enable the strict mode commenting the following line  
     // 'use strict';
@@ -7,22 +9,20 @@
 
         // initial object
 
-        let settings = {
+        var settings = {
             'iframe_container_id': 'getotp_iframe_parent',
             'iframe_container_class': '',
             'iframe_id': 'getotp_iframe',
             'iframe_class': '',
             'success_callback_function': 'otpSuccess',
             'failed_callback_function': 'otpFailed',
-            'url_storage_key': 'getotp_form_url',
+            'url_storage_key': 'getotp_form_url'
 
         };
 
-        let getotp_object = {
+        var getotp_object = {
             'settings': settings,
-            'trusted_origins': [
-                'https://otp.dev',
-            ],
+            'trusted_origins': ['https://otp.dev']
         };
 
         function prepareStyle() {
@@ -30,7 +30,7 @@
         }
 
         function setStyle() {
-            let css_rules = prepareStyle();
+            var css_rules = prepareStyle();
             getotp_object['settings']['css_rules'] = css_rules;
         }
 
@@ -53,7 +53,7 @@
             }
 
             console.log('this', this);
-        }
+        };
 
         // end use init to custom config
 
@@ -66,7 +66,7 @@
 
             // debugger;
 
-            let client_origin = window.location.origin;
+            var client_origin = window.location.origin;
 
             if (event.origin != client_origin) {
                 if (!getotp_object['trusted_origins'].includes(event.origin)) {
@@ -75,12 +75,12 @@
                 }
             }
 
-            let data = event.data;
+            var data = event.data;
 
-            if (typeof (getotp_object[data.func]) == "function") {
+            if (typeof getotp_object[data.func] == "function") {
                 getotp_object[data.func].call(null, data.message);
             }
-        }
+        };
 
         /* end event listener */
 
@@ -88,53 +88,49 @@
 
         // callback from message listener, doesnt have access to this because under window scope
         getotp_object.iframeHeightCallback = function (message) {
-            let embed_height = message.embed_height;
+            var embed_height = message.embed_height;
 
             getotp_object.updateIframeHeight(embed_height);
-        }
+        };
 
         getotp_object.otpClientCallback = function (message) {
 
-            let otp_id = message.otp_id;
-            let status = message.status;
-            let redirect_url = message.redirect_url;
+            var otp_id = message.otp_id;
+            var status = message.status;
+            var redirect_url = message.redirect_url;
 
-            let payload = {
+            var payload = {
                 'otp_id': otp_id,
                 'status': status,
-                'redirect_url': redirect_url,
+                'redirect_url': redirect_url
             };
 
             if (status === 'success') {
 
-                if (typeof (window[getotp_object['settings'].success_callback_function]) == "function") {
+                if (typeof window[getotp_object['settings'].success_callback_function] == "function") {
                     window[getotp_object['settings'].success_callback_function].call(null, payload);
-                }
-                else {
+                } else {
                     console.error('To handle OTP success callback, please define function ' + getotp_object['settings'].success_callback_function + '(payload)');
                 }
-            }
-            else if (status === 'fail') {
+            } else if (status === 'fail') {
 
-                if (typeof (window[getotp_object['settings'].failed_callback_function]) == "function") {
+                if (typeof window[getotp_object['settings'].failed_callback_function] == "function") {
                     window[getotp_object['settings'].failed_callback_function].call(null, payload);
-                }
-                else {
+                } else {
                     console.error('To handle OTP error callback, please define function ' + getotp_object['settings'].failed_callback_function + '(payload)');
                 }
-
             }
-        }
+        };
 
         /* end server callback */
 
         getotp_object.embedOtpForm = function (otp_url) {
-            let iframe_container = document.createElement('div');
+            var iframe_container = document.createElement('div');
 
             iframe_container.setAttribute("id", this.settings.iframe_container_id);
             iframe_container.setAttribute("class", this.settings.iframe_container_class);
 
-            let iframe = document.createElement('iframe');
+            var iframe = document.createElement('iframe');
 
             iframe.setAttribute("id", this.settings.iframe_id);
             iframe.setAttribute("class", this.settings.iframe_class);
@@ -150,14 +146,14 @@
 
             // create inline style for iframe position
 
-            let style_element = document.createElement('style');
+            var style_element = document.createElement('style');
 
             style_element.appendChild(document.createTextNode(this.settings.css_rules));
 
             /* attach to the document head */
 
             document.getElementsByTagName('head')[0].appendChild(style_element);
-        }
+        };
 
         getotp_object.showOtpForm = function (otp_url) {
 
@@ -169,20 +165,20 @@
             this.embedOtpForm(otp_url);
 
             return true;
-        }
+        };
 
         getotp_object.updateIframeHeight = function (embed_height) {
             console.log('update iframe height', embed_height);
 
             this.embed_height = embed_height;
 
-            let iframe = document.getElementById('getotp_iframe');
+            var iframe = document.getElementById('getotp_iframe');
 
             iframe.style.height = embed_height + 'px';
-        }
+        };
 
         getotp_object.reloadOtpForm = function () {
-            let otp_url = sessionStorage.getItem(this.settings.url_storage_key);
+            var otp_url = sessionStorage.getItem(this.settings.url_storage_key);
 
             if (!otp_url) {
                 console.error('No previous otp form url define in session storage with key ' + this.settings.url_storage_key);
@@ -190,31 +186,30 @@
             }
 
             this.embedOtpForm(otp_url);
-        }
+        };
 
         // for development purpose
 
         getotp_object.addOrigin = function (origin) {
             this.trusted_origins.push(origin);
             return this.trusted_origins;
-        }
+        };
 
         getotp_object.clearSession = function () {
             sessionStorage.removeItem(this.settings.url_storage_key);
-        }
+        };
 
         return getotp_object;
     }
 
     // We need that our library is globally accesible, then we save in the window
-    if (typeof (window.getotp) === 'undefined') {
+    if (typeof window.getotp === 'undefined') {
         window.getotp = getotp();
     }
 
     if (window.addEventListener) {
         window.addEventListener("message", window.getotp.getotpServerMessage, false);
-    }
-    else if (window.attachEvent) {
+    } else if (window.attachEvent) {
         window.attachEvent("onmessage", window.getotp.getotpServerMessage, false);
     }
-})(window); 
+})(window);

@@ -1,0 +1,30 @@
+{
+  "name": "tehran-js",
+  "version": "0.1.0",
+  "description": "Official JS client for Tehran",
+  "main": "index.js",
+  "scripts": {
+    "dev": "babel src -d dist --copy-files",
+    "watch": "babel src --out-dir dist --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lalokalabs/tehran-js.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lalokalabs/tehran-js/issues"
+  },
+  "homepage": "https://github.com/lalokalabs/tehran-js#readme",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-es2015": "^6.24.1"
+  },
+  "babel": {
+    "presets": [
+      "es2015"
+    ]
+  }
+}
