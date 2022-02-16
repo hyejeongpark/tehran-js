@@ -1,0 +1,104 @@
+<html>
+
+<head>
+    <title></title>
+</head>
+
+<body>
+
+    <h1>Secure Payment with OTP Verification</h1>
+
+    <form id="myform" action="#">
+
+        <h4>Amount: USD10</h4>
+
+        <button id="verify_btn" type="button">Verify with OTP</button>
+    </form>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js"
+        integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
+    <!-- update this base on your directory -->
+    <script src="../dist/getotp.min.js"></script>
+
+    <script type="text/javascript">
+
+        $(function () {
+
+            $("#verify_btn").click(function () {
+                backendVerify();
+            });
+
+            // dummy API call to backend. replace with your API call
+            function backendVerify() {
+
+                /*
+                var payload = { 
+                    amount: 200,
+                    trans_id: 'asd4i4sd123'
+                };
+
+                var api_url = 'https://yoursite.test/transfers/verify/';
+                
+                return $.ajax({
+                        method: "POST",
+                        url: api_url,
+                        data: payload
+                    })
+                    .done(function( response ) {
+                        var otp_id = response.otp_id;
+                        var otp_url = response.link;
+                    });
+                */
+
+                // dummy API response. 
+                // Your backend API is expect to return the `link` and `otp_id`
+                var api_response = {
+                    'link': 'http://localhost:8090/api/ui/verify/k0mzjykezkgozwqj5uat/email/pin/',
+                    'otp_id': 'k0mzjykezkgozwqj5uat',
+                };
+
+                var otp_url = api_response.link;
+
+                // since http://localhost:8090 is not a trusted origin, add the domain as trusted origin
+                // you likely dont need this except when developing on local GetOTP server
+
+                getotp.addOrigin('http://localhost:8090/');
+
+                getotp.showOtpForm(otp_url);
+            }
+
+            /* handle callback */
+
+            function otpSuccess(payload) {
+                var callback_otp_id = payload.otp_id;
+                var redirect_url = payload.redirect_url;
+
+                // do something
+
+                console.log('otp verification success');
+            }
+
+            window.otpSuccess = otpSuccess;
+
+            function otpFailed(payload) {
+                var callback_otp_id = payload.otp_id;
+                var redirect_url = payload.redirect_url;
+
+                // do something
+
+                console.log('otp verification failed');
+            }
+
+            window.otpFailed = otpFailed;
+
+            /* end handle callback */
+
+
+        });
+
+
+
+    </script>
+</body>
+
+</html>
