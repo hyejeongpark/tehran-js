@@ -15,7 +15,6 @@
             'success_callback_function': 'otpSuccess',
             'failed_callback_function': 'otpFailed',
             'url_storage_key': 'getotp_form_url',
-
         };
 
         let getotp_object = {
@@ -195,6 +194,7 @@
         // for development purpose
 
         getotp_object.addOrigin = function (origin) {
+            origin = origin.replace(/\/$/, '');
             this.trusted_origins.push(origin);
             return this.trusted_origins;
         }
