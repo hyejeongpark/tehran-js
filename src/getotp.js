@@ -8,6 +8,7 @@
         // initial object
 
         let settings = {
+            'embed_mode': 'compact',
             'iframe_container_id': 'getotp_iframe_parent',
             'iframe_container_class': '',
             'iframe_id': 'getotp_iframe',
@@ -31,6 +32,10 @@
         function setStyle() {
             let css_rules = prepareStyle();
             getotp_object['settings']['css_rules'] = css_rules;
+        }
+
+        function prepareEmbedUrl(url) {
+            return url + 'pin/?embed_mode=' + getotp_object.settings.embed_mode;
         }
 
         setStyle();
@@ -127,7 +132,7 @@
 
         /* end server callback */
 
-        getotp_object.embedOtpForm = function (otp_url) {
+        getotp_object.embedOtpForm = function (otp_url, append_container) {
             let iframe_container = document.createElement('div');
 
             iframe_container.setAttribute("id", this.settings.iframe_container_id);
@@ -139,35 +144,51 @@
             iframe.setAttribute("class", this.settings.iframe_class);
 
             iframe_container.appendChild(iframe);
-            document.body.appendChild(iframe_container);
 
             // TODO: show loading before fetch the url
+            console.log('iframe.src', otp_url);
 
             iframe.src = otp_url;
             iframe.width = '100%';
             // iframe.height = '600';
 
-            // create inline style for iframe position
+            if (append_container) {
+                append_container.appendChild(iframe_container);
+            }
+            else {
+                document.body.appendChild(iframe_container);
 
-            let style_element = document.createElement('style');
+                // create inline style for iframe position
 
-            style_element.appendChild(document.createTextNode(this.settings.css_rules));
+                let style_element = document.createElement('style');
 
-            /* attach to the document head */
+                style_element.appendChild(document.createTextNode(this.settings.css_rules));
 
-            document.getElementsByTagName('head')[0].appendChild(style_element);
+                /* attach to the document head */
+
+                document.getElementsByTagName('head')[0].appendChild(style_element);
+            }
         }
 
-        getotp_object.showOtpForm = function (otp_url) {
+        getotp_object.showOtpForm = function (otp_url, append_container = null) {
 
-            console.log('this', this);
+            let embed_url = prepareEmbedUrl(otp_url);
+
+            console.log('embed_url', embed_url);
 
             // save otp url for reload purpose
-            sessionStorage.setItem(this.settings.url_storage_key, otp_url);
+            sessionStorage.setItem(this.settings.url_storage_key, embed_url);
 
-            this.embedOtpForm(otp_url);
+            this.embedOtpForm(embed_url, append_container);
 
             return true;
+        }
+
+        getotp_object.showModalForm = function (otp_url) {
+
+            let embed_url = prepareEmbedUrl(otp_url);
+
+            console.log('modal under dev');
         }
 
         getotp_object.updateIframeHeight = function (embed_height) {
