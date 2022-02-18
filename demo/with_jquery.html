@@ -70,7 +70,7 @@
                 // dummy API response. 
                 // Your backend API is expect to return the `link` and `otp_id`
                 var api_response = {
-                    'link': 'http://localhost:8090/api/ui/verify/9lssori8sg20wip3yt20/email/pin/?embed_mode=compact',
+                    'link': 'http://localhost:8090/api/ui/verify/920qbn0juvzlcy9wuua4/email/',
                     'otp_id': 'k0mzjykezkgozwqj5uat',
                 };
 
@@ -115,6 +115,18 @@
             }
 
             window.otpFailed = otpFailed;
+
+            function otpBeforeLoad(payload) {
+                console.log('otpBeforeLoad');
+            }
+
+            window.otpBeforeLoad = otpBeforeLoad;
+
+            function otpAfterLoad(payload) {
+                console.log('otpAfterLoad');
+            }
+
+            window.otpAfterLoad = otpAfterLoad;
 
             /* end handle callback */
 
