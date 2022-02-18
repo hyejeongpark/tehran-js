@@ -22,7 +22,9 @@
             'trusted_origins': [
                 'https://otp.dev',
             ],
-            'active_modal': null
+            'active_modal': null,
+            'embed_type': null,
+            'embed_height': null
         };
 
         // end initial object
@@ -78,6 +80,15 @@
             return url + 'pin/?embed_mode=' + embed_mode;
         }
 
+        function initClientCallback(function_name, payload) {
+            if (typeof (window[function_name]) == "function") {
+                window[function_name].call(null, payload);
+            }
+            else {
+                console.info('Callback function ' + function_name + '(payload) has not been define');
+            }
+        }
+
         // end helper
 
         /* event listener */
@@ -109,11 +120,17 @@
 
         /* server callback */
 
-        // callback from message listener, doesnt have access to this because under window scope
+        // callback from message listener, doesnt have access to this scope because under window scope
         getotp_object.iframeHeightCallback = function (message) {
             let embed_height = message.embed_height;
 
             getotp_object.updateIframeHeight(embed_height);
+        }
+
+        getotp_object.keyPressCallback = function (message) {
+            let keycode = message.keycode;
+
+            getotp_object.handleKeypressCallback(keycode);
         }
 
         getotp_object.otpClientCallback = function (message) {
@@ -152,6 +169,9 @@
         /* end server callback */
 
         getotp_object.embedOtpForm = function (otp_url, embed_container) {
+
+            initClientCallback('otpBeforeLoad', {});
+
             let iframe_container = document.createElement('div');
 
             iframe_container.setAttribute("id", this.settings.iframe_container_id);
@@ -180,6 +200,8 @@
         getotp_object.initOtpForm = function (embed_url, embed_container) {
 
             let embed_mode = 'compact';
+
+            this.embed_type = 'embed';
 
             this.embedOtpForm(embed_url, embed_container);
 
@@ -219,46 +241,57 @@
 
             let embed_mode = 'compact';
 
-            if (this.active_modal) {
-                this.active_modal.open();
-            }
-            else {
-                let modal = new tingle.modal({
-                    footer: false,
-                    closeMethods: ['overlay', 'button', 'escape'],
-                    closeLabel: "Close",
-                    onOpen: function () {
-                        console.log('modal open');
-                    },
-                    onClose: function () {
-                        console.log('modal closed');
-                    },
-                    beforeClose: function () {
-                        return true;
-                    }
-                });
+            this.embed_type = 'modal';
 
-                modal.setContent('<div id="getotp_modal_embed_body"></div>');
+            let modal = new tingle.modal({
+                footer: false,
+                closeMethods: ['overlay', 'button', 'escape'],
+                closeLabel: "Close",
+                onOpen: function () {
+                    initClientCallback('otpModalOpen', {});
+                },
+                onClose: function () {
 
-                this.active_modal = modal;
+                    modal.destroy();
 
-                // embed otp iframe
+                    initClientCallback('otpModalClose', {});
+                },
+                beforeClose: function () {
+                    return true;
+                }
+            });
 
-                let embed_container = document.getElementById('getotp_modal_embed_body');
+            this.active_modal = modal;
 
-                this.embedOtpForm(embed_url, embed_container);
+            let embed_dom_id = 'getotp_modal_embed_body';
 
-                setDefaultStyle(embed_mode);
+            modal.setContent('<div id="' + embed_dom_id + '"></div>');
 
-                modal.open();
-            }
+            // embed otp iframe
+
+            let embed_container = document.getElementById(embed_dom_id);
+
+            this.embedOtpForm(embed_url, embed_container);
+
+            setDefaultStyle(embed_mode);
+
+            modal.open();
         }
 
         getotp_object.showModalForm = function (otp_url) {
             let embed_mode = 'compact';
             let embed_url = prepareEmbedUrl(otp_url, embed_mode);
 
+            // save otp url for reload purpose
+            sessionStorage.setItem(this.settings.url_storage_key, embed_url);
+
             this.initModalForm(embed_url);
+        }
+
+        getotp_object.hideModalForm = function (otp_url) {
+            if (this.active_modal) {
+                this.active_modal.close();
+            }
         }
 
         getotp_object.reloadModalForm = function () {
@@ -281,6 +314,7 @@
         getotp_object.initStickyForm = function (embed_url) {
 
             let embed_mode = 'wide';
+            this.embed_type = 'sticky';
 
             let embed_container = document.body;
 
@@ -318,14 +352,36 @@
 
         // end sticky form
 
-        getotp_object.updateIframeHeight = function (embed_height) {
-            console.log('update iframe height', embed_height);
+        getotp_object.handleKeypressCallback = function (keycode) {
+            // if user press escape
+            if (keycode == 27) {
+                if (this.embed_type == 'modal') {
+                    this.hideModalForm();
+                }
+                else {
+                    // do something
+                }
 
-            this.embed_height = embed_height;
+                initClientCallback('keypressCallback', { 'keycode': keycode });
+            }
+        }
+
+        getotp_object.updateIframeHeight = function (embed_height) {
+
+            let px_embed_height = embed_height + 'px';
 
             let iframe = document.getElementById('getotp_iframe');
 
             iframe.style.height = embed_height + 'px';
+
+            console.log('update iframe height', px_embed_height);
+            this.embed_height = px_embed_height;
+
+            initClientCallback('otpAfterLoad', {});
+        }
+
+        getotp_object.getEmbedHeight = function () {
+            return this.embed_height;
         }
 
         // for development purpose
