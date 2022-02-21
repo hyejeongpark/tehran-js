@@ -15,6 +15,7 @@
             'success_callback_function': 'otpSuccess',
             'failed_callback_function': 'otpFailed',
             'url_storage_key': 'getotp_form_url',
+            'dev_mode': false
         };
 
         let getotp_object = {
@@ -24,7 +25,8 @@
             ],
             'active_modal': null,
             'embed_type': null,
-            'embed_height': null
+            'embed_height': null,
+            'script_origin': document.currentScript && document.currentScript.src
         };
 
         // end initial object
@@ -34,7 +36,7 @@
         getotp_object.init = function (options) {
             console.log('options', options);
 
-            for (key in options) {
+            for (let key in options) {
                 if (this.settings.hasOwnProperty(key)) {
                     this.settings[key] = options[key];
 
@@ -53,22 +55,41 @@
 
         function enqueueModalScripts() {
 
+            // prepare base url
+
+            let parse_origin = (new URL(getotp_object.script_origin));
+
+            let origin = parse_origin.origin;
+
             // load CSS
 
             const style = document.createElement('link');
 
             style.setAttribute('rel', 'stylesheet');
-            style.setAttribute('href', '../dist/getotp_modal.min.css');
-            
+
+            let style_url = origin + '/static/css/getotp_modal.min.css';
+
+            if (getotp_object.settings.dev_mode) {
+                style_url = origin + '/dist/getotp_modal.min.css';
+            }
+
+            style.setAttribute('href', style_url);
+
             document.getElementsByTagName('head')[0].appendChild(style);
-            
+
             // load JS
 
             const script = document.createElement('script');
 
-            /* add attributes */
             script.setAttribute("type", "text/javascript");
-            script.setAttribute('src', '../dist/getotp_modal.min.js');
+
+            let script_url = origin + '/static/js/getotp_modal.min.js';
+
+            if (getotp_object.settings.dev_mode) {
+                script_url = origin + '/dist/getotp_modal.min.js';
+            }
+
+            script.setAttribute('src', script_url);
 
             document.body.appendChild(script);
 
