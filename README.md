@@ -15,13 +15,19 @@ Under development, do not use for production
 
 2) Get the `otp_id` and `link` property from the Tehran API response and return to the Front End
 
-3) Show the OTP form
+3) Show the OTP modal
 
 ```
 var otp_url = response.link;
 
-// show the otp form
-getotp.showOtpForm(otp_url);
+// show the otp modal
+getotp.showModal(otp_url);
+```
+
+4) Manually hide the modal
+
+```
+getotp.hideModal();
 ```
 
 ## HANDLING OTP SUCCESS and OTP FAILED CALLBACK
@@ -66,8 +72,20 @@ window.otpFailed = otpFailed;
 // add local Tehran server as trusted origin
 getotp.addOrigin('http://localhost:8080');
 
-// show the otp form
-getotp.showOtpForm(otp_url);
+// show the otp modal
+getotp.showModal(otp_url);
+```
+
+## MANUALLY EMBED OTP
+
+Developer can manually embed the OTP form without using provided modal
+
+```
+// specify dom element to embed
+var dom_element = document.getElementById('embed_div');
+
+// embed the otp modal
+getotp.showEmbed(otp_url, dom_element);
 ```
 
 ## RELOADING OTP FORM
@@ -75,29 +93,33 @@ getotp.showOtpForm(otp_url);
 1) If the user reload their page and you want to show again the OTP form
 
 ```
-getotp.reloadOtpForm();
+// if using modal
+getotp.reloadModal();
+
+// if using embed
+getotp.reloadEmbed();
 ```
 
 ## CUSTOMIZE OPTIONS
 
-1) Before calling `getotp.showOtpForm(otp_url)`, developer can use init to customize the settings
+1) Before calling `getotp.showModal(otp_url)`, developer can use init to customize the settings
 
 ```
 
 var custom_settings = {
-    'iframe_container_id': 'custom_iframe_parent',
-    'iframe_container_class': 'custom_iframe_parent_class',
-    'iframe_id': 'custom_iframe',
-    'iframe_class': 'custom_iframe_class',
-    'success_callback_function': 'customOtpSuccess',
-    'failed_callback_function': 'customOtpFailed',
-    'url_storage_key': 'custom_form_url',
+    'iframe_container_id': 'getotp_iframe_parent',
+    'iframe_container_class': '',
+    'iframe_id': 'getotp_iframe',
+    'iframe_class': '',
+    'success_callback_function': 'otpSuccess',
+    'failed_callback_function': 'otpFailed',
+    'url_storage_key': 'getotp_form_url',
 };
 
 getotp.init(custom_settings);
 
-// show the otp form
-getotp.showOtpForm(otp_url);
+// show the otp modal
+getotp.showModal(otp_url);
 ```
 
 ## USAGE WITH AJAX EXAMPLES
@@ -123,8 +145,8 @@ function submitVerify() {
             var otp_id = response.otp_id;
             var otp_url = response.link;
 
-            // show the OTP form
-            getotp.showOtpForm(otp_url);
+            // show the OTP modal
+            getotp.showModal(otp_url);
         });
 }
 
@@ -150,8 +172,8 @@ function submitVerify() {
             var otp_id = response.otp_id;
             var otp_url = response.link;
 
-            // show the OTP form
-            getotp.showOtpForm(otp_url);
+            // show the OTP modal
+            getotp.showModal(otp_url);
         })
 }
 
@@ -185,8 +207,8 @@ function submitVerify() {
         let otp_id = data.otp_id;
         let otp_url = data.link;
 
-        // show the OTP form
-        getotp.showOtpForm(otp_url);
+        // show the OTP modal
+        getotp.showModal(otp_url);
     })
     .catch((error) => {
         console.error('Error:', error);
