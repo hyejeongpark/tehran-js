@@ -79,6 +79,8 @@
                 // since http://localhost:8090 is not a trusted origin, add the domain as trusted origin
                 // you likely dont need this except when developing on local GetOTP server
 
+                getotp.init({ 'dev_mode': true, });
+
                 getotp.addOrigin('http://localhost:8090');
 
                 if (embed_type == 'modal') {
