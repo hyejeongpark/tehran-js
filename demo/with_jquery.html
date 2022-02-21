@@ -3,7 +3,7 @@
 <head>
     <title>Demo site</title>
 
-    <link rel="stylesheet" href="../dist/getotp_modal.min.css">
+    <!-- <link rel="stylesheet" href="../dist/getotp_modal.min.css"> -->
 </head>
 
 <body>
@@ -26,8 +26,8 @@
     <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js"
         integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
     <!-- update this base on your directory -->
-    <script src="../dist/getotp.js"></script>
-    <script src="../dist/getotp_modal.min.js"></script>
+    <script src="../dist/getotp.min.js"></script>
+    <!-- <script src="../dist/getotp_modal.min.js"></script> -->
 
     <script type="text/javascript">
 
@@ -70,8 +70,8 @@
                 // dummy API response. 
                 // Your backend API is expect to return the `link` and `otp_id`
                 var api_response = {
-                    'link': 'http://localhost:8090/api/ui/verify/920qbn0juvzlcy9wuua4/email/',
-                    'otp_id': 'k0mzjykezkgozwqj5uat',
+                    'link': 'http://localhost:8090/api/ui/verify/9k7d45lzy4vl7s85wug4/email/',
+                    'otp_id': '9k7d45lzy4vl7s85wug4',
                 };
 
                 var otp_url = api_response.link;
@@ -82,13 +82,13 @@
                 getotp.addOrigin('http://localhost:8090');
 
                 if (embed_type == 'modal') {
-                    getotp.showModalForm(otp_url);
+                    getotp.showModal(otp_url);
                 }
                 else if (embed_type == 'sticky') {
                     getotp.showStickyForm(otp_url);
                 }
                 else if (embed_type == 'embed') {
-                    getotp.showOtpForm(otp_url, document.getElementById('embed_container'));
+                    getotp.showEmbed(otp_url, document.getElementById('embed_container'));
                 }
             }
 
@@ -116,17 +116,33 @@
 
             window.otpFailed = otpFailed;
 
+            // callback before iframe is load
             function otpBeforeLoad(payload) {
                 console.log('otpBeforeLoad');
             }
 
             window.otpBeforeLoad = otpBeforeLoad;
 
+            // callback after iframe is load
             function otpAfterLoad(payload) {
                 console.log('otpAfterLoad');
             }
 
             window.otpAfterLoad = otpAfterLoad;
+
+            // callback when modal is show
+            function otpModalOpen(payload) {
+                console.log('otpModalOpen');
+            }
+
+            window.otpModalOpen = otpModalOpen;
+
+            // callback after modal was close
+            function otpModalClose(payload) {
+                console.log('otpModalClose');
+            }
+
+            window.otpModalClose = otpModalClose;
 
             /* end handle callback */
 
