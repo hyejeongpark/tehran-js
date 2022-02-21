@@ -51,6 +51,30 @@
 
         // helper
 
+        function enqueueModalScripts() {
+
+            // load CSS
+
+            const style = document.createElement('link');
+
+            style.setAttribute('rel', 'stylesheet');
+            style.setAttribute('href', '../dist/getotp_modal.min.css');
+            
+            document.getElementsByTagName('head')[0].appendChild(style);
+            
+            // load JS
+
+            const script = document.createElement('script');
+
+            /* add attributes */
+            script.setAttribute("type", "text/javascript");
+            script.setAttribute('src', '../dist/getotp_modal.min.js');
+
+            document.body.appendChild(script);
+
+            return script;
+        }
+
         function prepareStyle(embed_mode) {
 
             if (embed_mode === 'compact') {
@@ -197,7 +221,7 @@
 
         // manual position form
 
-        getotp_object.initOtpForm = function (embed_url, embed_container) {
+        getotp_object.initEmbed = function (embed_url, embed_container) {
 
             let embed_mode = 'compact';
 
@@ -208,7 +232,7 @@
             setDefaultStyle(embed_mode);
         }
 
-        getotp_object.showOtpForm = function (otp_url, embed_container) {
+        getotp_object.showEmbed = function (otp_url, embed_container) {
 
             let embed_mode = 'compact';
 
@@ -217,12 +241,12 @@
             // save otp url for reload purpose
             sessionStorage.setItem(this.settings.url_storage_key, embed_url);
 
-            this.initOtpForm(embed_url, embed_container);
+            this.initEmbed(embed_url, embed_container);
 
             return true;
         }
 
-        getotp_object.reloadOtpForm = function (embed_container) {
+        getotp_object.reloadEmbed = function (embed_container) {
             let embed_url = sessionStorage.getItem(this.settings.url_storage_key);
 
             if (!embed_url) {
@@ -230,71 +254,85 @@
                 return;
             }
 
-            this.initOtpForm(embed_url, embed_container);
+            this.initEmbed(embed_url, embed_container);
         }
 
         // end manual position form
 
         // modal form
 
-        getotp_object.initModalForm = function (embed_url) {
+        getotp_object.initModal = function (embed_url) {
+
+            if (typeof (tingle) != 'undefined') {
+                loadModal();
+            }
+            else {
+                let load_script = enqueueModalScripts();
+
+                load_script.addEventListener('load', () => {
+                    loadModal();
+                });
+            }
 
             let embed_mode = 'compact';
 
             this.embed_type = 'modal';
 
-            let modal = new tingle.modal({
-                footer: false,
-                closeMethods: ['overlay', 'button', 'escape'],
-                closeLabel: "Close",
-                onOpen: function () {
-                    initClientCallback('otpModalOpen', {});
-                },
-                onClose: function () {
+            function loadModal() {
+                let modal = new tingle.modal({
+                    footer: false,
+                    closeMethods: ['overlay', 'button', 'escape'],
+                    closeLabel: "Close",
+                    onOpen: function () {
+                        initClientCallback('otpModalOpen', {});
+                    },
+                    onClose: function () {
 
-                    modal.destroy();
+                        modal.destroy();
 
-                    initClientCallback('otpModalClose', {});
-                },
-                beforeClose: function () {
-                    return true;
-                }
-            });
+                        initClientCallback('otpModalClose', {});
+                    },
+                    beforeClose: function () {
+                        return true;
+                    }
+                });
 
-            this.active_modal = modal;
+                getotp_object.active_modal = modal;
 
-            let embed_dom_id = 'getotp_modal_embed_body';
+                let embed_dom_id = 'getotp_modal_embed_body';
 
-            modal.setContent('<div id="' + embed_dom_id + '"></div>');
+                modal.setContent('<div id="' + embed_dom_id + '"></div>');
 
-            // embed otp iframe
+                // embed otp iframe
 
-            let embed_container = document.getElementById(embed_dom_id);
+                let embed_container = document.getElementById(embed_dom_id);
 
-            this.embedOtpForm(embed_url, embed_container);
+                getotp_object.embedOtpForm(embed_url, embed_container);
 
-            setDefaultStyle(embed_mode);
+                setDefaultStyle(embed_mode);
 
-            modal.open();
+                modal.open();
+            }
         }
 
-        getotp_object.showModalForm = function (otp_url) {
+        getotp_object.showModal = function (otp_url) {
+
             let embed_mode = 'compact';
             let embed_url = prepareEmbedUrl(otp_url, embed_mode);
 
             // save otp url for reload purpose
             sessionStorage.setItem(this.settings.url_storage_key, embed_url);
 
-            this.initModalForm(embed_url);
+            this.initModal(embed_url);
         }
 
-        getotp_object.hideModalForm = function (otp_url) {
+        getotp_object.hideModal = function (otp_url) {
             if (this.active_modal) {
                 this.active_modal.close();
             }
         }
 
-        getotp_object.reloadModalForm = function () {
+        getotp_object.reloadModal = function () {
             let embed_url = sessionStorage.getItem(this.settings.url_storage_key);
 
             if (!embed_url) {
@@ -302,7 +340,7 @@
                 return;
             }
 
-            this.initModalForm(embed_url);
+            this.initModal(embed_url);
 
             return true;
         }
@@ -311,7 +349,7 @@
 
         // sticky form
 
-        getotp_object.initStickyForm = function (embed_url) {
+        getotp_object.initSticky = function (embed_url) {
 
             let embed_mode = 'wide';
             this.embed_type = 'sticky';
@@ -323,7 +361,7 @@
             setDefaultStyle(embed_mode);
         }
 
-        getotp_object.showStickyForm = function (otp_url) {
+        getotp_object.showSticky = function (otp_url) {
 
             let embed_mode = 'wide';
 
@@ -332,12 +370,12 @@
             // save otp url for reload purpose
             sessionStorage.setItem(this.settings.url_storage_key, embed_url);
 
-            this.initStickyForm(embed_url);
+            this.initSticky(embed_url);
 
             return true;
         }
 
-        getotp_object.reloadStickyForm = function () {
+        getotp_object.reloadSticky = function () {
             let embed_url = sessionStorage.getItem(this.settings.url_storage_key);
 
             if (!embed_url) {
@@ -345,7 +383,7 @@
                 return;
             }
 
-            this.initStickyForm(embed_url);
+            this.initSticky(embed_url);
 
             return true;
         }
@@ -356,7 +394,7 @@
             // if user press escape
             if (keycode == 27) {
                 if (this.embed_type == 'modal') {
-                    this.hideModalForm();
+                    this.hideModal();
                 }
                 else {
                     // do something
