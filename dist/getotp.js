@@ -26,6 +26,8 @@
             'active_modal': null,
             'embed_type': null,
             'embed_height': null,
+            'embed_dom_id': 'getotp_modal_embed_body',
+            'modal_spinner_id': 'getotp_modal_spinner',
             'script_origin': document.currentScript && document.currentScript.src
         };
 
@@ -236,6 +238,19 @@
             console.log('embed_container', embed_container);
 
             embed_container.appendChild(iframe_container);
+
+            var self = this;
+
+            iframe.addEventListener("load", function () {
+
+                // remove modal spinner
+
+                var modal_spinner = document.getElementById(self.modal_spinner_id);
+
+                if (modal_spinner) {
+                    modal_spinner.parentNode.removeChild(modal_spinner);
+                }
+            });
         };
 
         // manual position form
@@ -317,9 +332,14 @@
 
                 getotp_object.active_modal = modal;
 
-                var embed_dom_id = 'getotp_modal_embed_body';
+                var embed_dom_id = getotp_object.embed_dom_id;
+                var modal_spinner_id = getotp_object.modal_spinner_id;
 
-                modal.setContent('<div id="' + embed_dom_id + '"></div>');
+                var spinner = '<svg width="38" height="38" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg" stroke="#000"> <g fill="none" fill-rule="evenodd"> <g transform="translate(1 1)" stroke-width="2"> <circle stroke-opacity=".5" cx="18" cy="18" r="18" /> <path d="M36 18c0-9.94-8.06-18-18-18"> <animateTransform attributeName="transform" type="rotate" from="0 18 18" to="360 18 18" dur="1s" repeatCount="indefinite" /> </path> </g> </g> </svg>';
+
+                var spinner_div = '<div id="' + modal_spinner_id + '" style="display: flex; align-items: center; justify-content: center; height: 100%;">' + spinner + '</div>';
+
+                modal.setContent('<div id="' + embed_dom_id + '">' + spinner_div + '</div>');
 
                 // embed otp iframe
 
