@@ -70,7 +70,7 @@
                 // dummy API response. 
                 // Your backend API is expect to return the `link` and `otp_id`
                 var api_response = {
-                    'link': 'http://localhost:8090/api/ui/verify/9k7d45lzy4vl7s85wug4/email/',
+                    'link': 'http://localhost:8090/api/ui/verify/yrh1g3bfppsmsjdwfn21/email/',
                     'otp_id': '9k7d45lzy4vl7s85wug4',
                 };
 
@@ -87,7 +87,7 @@
                     getotp.showModal(otp_url);
                 }
                 else if (embed_type == 'sticky') {
-                    getotp.showStickyForm(otp_url);
+                    getotp.showSticky(otp_url);
                 }
                 else if (embed_type == 'embed') {
                     getotp.showEmbed(otp_url, document.getElementById('embed_container'));
