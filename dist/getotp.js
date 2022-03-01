@@ -413,6 +413,47 @@
             return true;
         };
 
+        getotp_object.connect = function (body_payload, auth_payload) {
+
+            var success_redirect_url = body_payload.success_redirect_url;
+            var fail_redirect_url = body_payload.fail_redirect_url;
+            var user_email = body_payload.user_email;
+
+            var api_url = auth_payload.api_url,
+                api_key = auth_payload.api_key,
+                api_token = auth_payload.api_token;
+
+
+            var api_payload = {
+                'callback_url': success_redirect_url,
+                'success_redirect_url': success_redirect_url,
+                'fail_redirect_url': fail_redirect_url,
+                'channel': 'email',
+                'email': user_email,
+                'embed': 'compact'
+            };
+
+            api_url = api_url + 'api/verify/';
+
+            var authorization_key = btoa(api_key + ":" + api_token);
+
+            var fetch_config = {
+                method: 'POST',
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Basic ' + authorization_key
+                },
+                body: JSON.stringify(api_payload)
+            };
+
+            var api_call = fetch(api_url, fetch_config).then(function (response) {
+                return response.json();
+            });
+
+            return api_call;
+        };
+
         getotp_object.reloadSticky = function () {
             var embed_url = sessionStorage.getItem(this.settings.url_storage_key);
 

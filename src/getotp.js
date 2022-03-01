@@ -340,7 +340,7 @@
 
                 let spinner = '<svg width="38" height="38" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg" stroke="#000"> <g fill="none" fill-rule="evenodd"> <g transform="translate(1 1)" stroke-width="2"> <circle stroke-opacity=".5" cx="18" cy="18" r="18" /> <path d="M36 18c0-9.94-8.06-18-18-18"> <animateTransform attributeName="transform" type="rotate" from="0 18 18" to="360 18 18" dur="1s" repeatCount="indefinite" /> </path> </g> </g> </svg>';
 
-                let spinner_div = '<div id="' + modal_spinner_id+ '" style="display: flex; align-items: center; justify-content: center; height: 100%;">' + spinner + '</div>'
+                let spinner_div = '<div id="' + modal_spinner_id + '" style="display: flex; align-items: center; justify-content: center; height: 100%;">' + spinner + '</div>'
 
                 modal.setContent('<div id="' + embed_dom_id + '">' + spinner_div + '</div>');
 
@@ -414,6 +414,45 @@
             this.initSticky(embed_url);
 
             return true;
+        }
+
+        getotp_object.connect = function (body_payload, auth_payload) {
+
+            let success_redirect_url = body_payload.success_redirect_url;
+            let fail_redirect_url = body_payload.fail_redirect_url;
+            let user_email = body_payload.user_email;
+
+            let { api_url, api_key, api_token } = auth_payload;
+
+            let api_payload = {
+                'callback_url': success_redirect_url,
+                'success_redirect_url': success_redirect_url,
+                'fail_redirect_url': fail_redirect_url,
+                'channel': 'email',
+                'email': user_email,
+                'embed': 'compact',
+            };
+
+            api_url = api_url + 'api/verify/';
+
+            let authorization_key = btoa(api_key + ":" + api_token);
+
+            const fetch_config = {
+                method: 'POST',
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Basic ' + authorization_key
+                },
+                body: JSON.stringify(api_payload)
+            };
+
+            let api_call = fetch(api_url, fetch_config)
+            .then(response => {
+                return response.json();
+            });
+
+            return api_call;
         }
 
         getotp_object.reloadSticky = function () {
