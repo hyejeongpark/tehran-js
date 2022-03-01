@@ -196,18 +196,14 @@
 
             if (status === 'success') {
 
-                if (typeof window[getotp_object['settings'].success_callback_function] == "function") {
-                    window[getotp_object['settings'].success_callback_function].call(null, payload);
-                } else {
-                    console.error('To handle OTP success callback, please define function ' + getotp_object['settings'].success_callback_function + '(payload)');
-                }
+                var success_event = new CustomEvent('onOtpSucces', { detail: payload });
+
+                window.dispatchEvent(success_event);
             } else if (status === 'fail') {
 
-                if (typeof window[getotp_object['settings'].failed_callback_function] == "function") {
-                    window[getotp_object['settings'].failed_callback_function].call(null, payload);
-                } else {
-                    console.error('To handle OTP error callback, please define function ' + getotp_object['settings'].failed_callback_function + '(payload)');
-                }
+                var failed_event = new CustomEvent('onOtpFailed', { detail: payload });
+
+                window.dispatchEvent(failed_event);
             }
         };
 
@@ -498,6 +494,30 @@
 
         getotp_object.getEmbedHeight = function () {
             return this.embed_height;
+        };
+
+        getotp_object.onSuccess = function (callback) {
+
+            var self = this;
+
+            window.addEventListener('onOtpSucces', function (e) {
+
+                var payload = e.detail;
+
+                callback(payload);
+            });
+        };
+
+        getotp_object.onFailed = function (callback) {
+
+            var self = this;
+
+            window.addEventListener('onOtpFailed', function (e) {
+
+                var payload = e.detail;
+
+                callback(payload);
+            });
         };
 
         // for development purpose

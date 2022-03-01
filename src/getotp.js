@@ -194,22 +194,15 @@
 
             if (status === 'success') {
 
-                if (typeof (window[getotp_object['settings'].success_callback_function]) == "function") {
-                    window[getotp_object['settings'].success_callback_function].call(null, payload);
-                }
-                else {
-                    console.error('To handle OTP success callback, please define function ' + getotp_object['settings'].success_callback_function + '(payload)');
-                }
+                let success_event = new CustomEvent('onOtpSucces', { detail: payload });
+
+                window.dispatchEvent(success_event);
             }
             else if (status === 'fail') {
 
-                if (typeof (window[getotp_object['settings'].failed_callback_function]) == "function") {
-                    window[getotp_object['settings'].failed_callback_function].call(null, payload);
-                }
-                else {
-                    console.error('To handle OTP error callback, please define function ' + getotp_object['settings'].failed_callback_function + '(payload)');
-                }
+                let failed_event = new CustomEvent('onOtpFailed', { detail: payload });
 
+                window.dispatchEvent(failed_event);
             }
         }
 
@@ -448,9 +441,9 @@
             };
 
             let api_call = fetch(api_url, fetch_config)
-            .then(response => {
-                return response.json();
-            });
+                .then(response => {
+                    return response.json();
+                });
 
             return api_call;
         }
@@ -500,6 +493,32 @@
 
         getotp_object.getEmbedHeight = function () {
             return this.embed_height;
+        }
+
+        getotp_object.onSuccess = function (callback) {
+
+            let self = this;
+
+            window.addEventListener('onOtpSucces', function (e) {
+
+                let payload = e.detail;
+
+                callback(payload);
+                
+            });
+        }
+
+        getotp_object.onFailed = function (callback) {
+
+            let self = this;
+
+            window.addEventListener('onOtpFailed', function (e) {
+
+                let payload = e.detail;
+
+                callback(payload);
+
+            });
         }
 
         // for development purpose

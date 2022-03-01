@@ -70,8 +70,8 @@
                 // dummy API response. 
                 // Your backend API is expect to return the `link` and `otp_id`
                 var api_response = {
-                    'link': 'http://localhost:8090/api/ui/verify/yrh1g3bfppsmsjdwfn21/email/',
-                    'otp_id': '9k7d45lzy4vl7s85wug4',
+                    'link': 'http://localhost:8090/api/ui/verify/bj2knsi8ypympgidfzvd/email/',
+                    'otp_id': 'bj2knsi8ypympgidfzvd',
                 };
 
                 var otp_url = api_response.link;
@@ -92,31 +92,33 @@
                 else if (embed_type == 'embed') {
                     getotp.showEmbed(otp_url, document.getElementById('embed_container'));
                 }
+
+                getotp.onSuccess(function (payload) {
+
+                    var callback_otp_id = payload.otp_id;
+                    var redirect_url = payload.redirect_url;
+
+                    // do something
+
+                    console.log('otp verification success');
+
+                    getotp.hideModal();
+                });
+
+                getotp.onFailed(function (payload) {
+
+                    var callback_otp_id = payload.otp_id;
+                    var redirect_url = payload.redirect_url;
+
+                    // do something
+
+                    console.log('otp verification failed');
+
+                    getotp.hideModal();
+                });
             }
 
             /* handle callback */
-
-            function otpSuccess(payload) {
-                var callback_otp_id = payload.otp_id;
-                var redirect_url = payload.redirect_url;
-
-                // do something
-
-                console.log('otp verification success');
-            }
-
-            window.otpSuccess = otpSuccess;
-
-            function otpFailed(payload) {
-                var callback_otp_id = payload.otp_id;
-                var redirect_url = payload.redirect_url;
-
-                // do something
-
-                console.log('otp verification failed');
-            }
-
-            window.otpFailed = otpFailed;
 
             // callback before iframe is load
             function otpBeforeLoad(payload) {
