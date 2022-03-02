@@ -93,6 +93,18 @@
                     getotp.showEmbed(otp_url, document.getElementById('embed_container'));
                 }
 
+                getotp.onOpenModal(function (payload) {
+                    // do something
+
+                    console.log('after open otp modal');
+                });
+
+                getotp.onCloseModal(function (payload) {
+                    // do something
+
+                    console.log('after close otp modal');
+                });
+
                 getotp.onSuccess(function (payload) {
 
                     var callback_otp_id = payload.otp_id;
@@ -102,7 +114,7 @@
 
                     console.log('otp verification success');
 
-                    getotp.hideModal();
+                    getotp.closeModal();
                 });
 
                 getotp.onFailed(function (payload) {
@@ -114,41 +126,9 @@
 
                     console.log('otp verification failed');
 
-                    getotp.hideModal();
+                    getotp.closeModal();
                 });
             }
-
-            /* handle callback */
-
-            // callback before iframe is load
-            function otpBeforeLoad(payload) {
-                console.log('otpBeforeLoad');
-            }
-
-            window.otpBeforeLoad = otpBeforeLoad;
-
-            // callback after iframe is load
-            function otpAfterLoad(payload) {
-                console.log('otpAfterLoad');
-            }
-
-            window.otpAfterLoad = otpAfterLoad;
-
-            // callback when modal is show
-            function otpModalOpen(payload) {
-                console.log('otpModalOpen');
-            }
-
-            window.otpModalOpen = otpModalOpen;
-
-            // callback after modal was close
-            function otpModalClose(payload) {
-                console.log('otpModalClose');
-            }
-
-            window.otpModalClose = otpModalClose;
-
-            /* end handle callback */
 
 
         });

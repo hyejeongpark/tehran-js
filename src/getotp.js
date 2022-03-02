@@ -8,6 +8,7 @@
         // initial object
 
         let settings = {
+            'ui_mode': 'modal',
             'iframe_container_id': 'getotp_iframe_parent',
             'iframe_container_class': '',
             'iframe_id': 'getotp_iframe',
@@ -48,7 +49,9 @@
                 }
             }
 
-            console.log('this', this);
+            if (this.settings.ui_mode === 'modal') {
+
+            }
         }
 
         // end use init to custom config
@@ -68,6 +71,7 @@
             const style = document.createElement('link');
 
             style.setAttribute('rel', 'stylesheet');
+            style.setAttribute('type', 'text/css');
 
             let style_url = origin + '/static/css/getotp_modal.min.css';
 
@@ -84,6 +88,7 @@
             const script = document.createElement('script');
 
             script.setAttribute("type", "text/javascript");
+            script.setAttribute("async", true);
 
             let script_url = origin + '/static/js/getotp_modal.min.js';
 
@@ -136,6 +141,81 @@
             }
         }
 
+        function fireEvent(event_name, payload) {
+            let custom_event = new CustomEvent(event_name, { detail: payload });
+
+            window.dispatchEvent(custom_event);
+        }
+
+        function updateIframeHeight(embed_height) {
+
+            let px_embed_height = embed_height + 'px';
+
+            let iframe = document.getElementById('getotp_iframe');
+
+            iframe.style.height = embed_height + 'px';
+
+            console.log('update iframe height', px_embed_height);
+
+            getotp_object.embed_height = px_embed_height;
+
+            fireEvent('onOtpAfterLoad', {});
+        }
+
+        function loadModal(embed_url, embed_mode) {
+            let modal = new tingle.modal({
+                footer: false,
+                closeMethods: ['overlay', 'button', 'escape'],
+                closeLabel: "Close",
+                onOpen: function () {
+                    fireEvent('onOpenModal', {});
+                },
+                onClose: function () {
+                    modal.destroy();
+
+                    fireEvent('onCloseModal', {});
+                },
+                beforeClose: function () {
+                    return true;
+                }
+            });
+
+            getotp_object.active_modal = modal;
+
+            let embed_dom_id = getotp_object.embed_dom_id;
+            let modal_spinner_id = getotp_object.modal_spinner_id;
+
+            let spinner = '<svg width="38" height="38" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg" stroke="#000"> <g fill="none" fill-rule="evenodd"> <g transform="translate(1 1)" stroke-width="2"> <circle stroke-opacity=".5" cx="18" cy="18" r="18" /> <path d="M36 18c0-9.94-8.06-18-18-18"> <animateTransform attributeName="transform" type="rotate" from="0 18 18" to="360 18 18" dur="1s" repeatCount="indefinite" /> </path> </g> </g> </svg>';
+
+            let spinner_div = '<div id="' + modal_spinner_id + '" style="display: flex; align-items: center; justify-content: center; height: 100%;">' + spinner + '</div>'
+
+            modal.setContent('<div id="' + embed_dom_id + '">' + spinner_div + '</div>');
+
+            // embed otp iframe
+
+            let embed_container = document.getElementById(embed_dom_id);
+
+            getotp_object.embedOtpForm(embed_url, embed_container);
+
+            setDefaultStyle(embed_mode);
+
+            modal.open();
+        }
+
+        function handleKeypressCallback(keycode) {
+            // if user press escape
+            if (keycode == 27) {
+                if (getotp_object.embed_type == 'modal') {
+                    getotp_object.closeModal();
+                }
+                else {
+                    // do something
+                }
+            }
+
+            fireEvent('onOtpKeypress', { keycode });
+        }
+
         // end helper
 
         /* event listener */
@@ -144,8 +224,6 @@
             console.log("event", event);
 
             // Check sender origin to be trusted
-
-            // debugger;
 
             let client_origin = window.location.origin;
 
@@ -171,13 +249,13 @@
         getotp_object.iframeHeightCallback = function (message) {
             let embed_height = message.embed_height;
 
-            getotp_object.updateIframeHeight(embed_height);
+            updateIframeHeight(embed_height);
         }
 
         getotp_object.keyPressCallback = function (message) {
             let keycode = message.keycode;
 
-            getotp_object.handleKeypressCallback(keycode);
+            handleKeypressCallback(keycode);
         }
 
         getotp_object.otpClientCallback = function (message) {
@@ -193,16 +271,10 @@
             };
 
             if (status === 'success') {
-
-                let success_event = new CustomEvent('onOtpSucces', { detail: payload });
-
-                window.dispatchEvent(success_event);
+                fireEvent('onOtpSucces', payload);
             }
             else if (status === 'fail') {
-
-                let failed_event = new CustomEvent('onOtpFailed', { detail: payload });
-
-                window.dispatchEvent(failed_event);
+                fireEvent('onOtpFailed', payload);
             }
         }
 
@@ -210,7 +282,7 @@
 
         getotp_object.embedOtpForm = function (otp_url, embed_container) {
 
-            initClientCallback('otpBeforeLoad', {});
+            fireEvent('onOtpBeforeLoad', {});
 
             let iframe_container = document.createElement('div');
 
@@ -292,61 +364,21 @@
 
         getotp_object.initModal = function (embed_url) {
 
+            let embed_mode = 'compact';
+
+            this.embed_type = 'modal';
+
             if (typeof (tingle) != 'undefined') {
-                loadModal();
+                loadModal(embed_url, embed_mode);
             }
             else {
                 let load_script = enqueueModalScripts();
 
                 load_script.addEventListener('load', () => {
-                    loadModal();
+                    loadModal(embed_url, embed_mode);
                 });
             }
-
-            let embed_mode = 'compact';
-
-            this.embed_type = 'modal';
-
-            function loadModal() {
-                let modal = new tingle.modal({
-                    footer: false,
-                    closeMethods: ['overlay', 'button', 'escape'],
-                    closeLabel: "Close",
-                    onOpen: function () {
-                        initClientCallback('otpModalOpen', {});
-                    },
-                    onClose: function () {
-
-                        modal.destroy();
-
-                        initClientCallback('otpModalClose', {});
-                    },
-                    beforeClose: function () {
-                        return true;
-                    }
-                });
-
-                getotp_object.active_modal = modal;
-
-                let embed_dom_id = getotp_object.embed_dom_id;
-                let modal_spinner_id = getotp_object.modal_spinner_id;
-
-                let spinner = '<svg width="38" height="38" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg" stroke="#000"> <g fill="none" fill-rule="evenodd"> <g transform="translate(1 1)" stroke-width="2"> <circle stroke-opacity=".5" cx="18" cy="18" r="18" /> <path d="M36 18c0-9.94-8.06-18-18-18"> <animateTransform attributeName="transform" type="rotate" from="0 18 18" to="360 18 18" dur="1s" repeatCount="indefinite" /> </path> </g> </g> </svg>';
-
-                let spinner_div = '<div id="' + modal_spinner_id + '" style="display: flex; align-items: center; justify-content: center; height: 100%;">' + spinner + '</div>'
-
-                modal.setContent('<div id="' + embed_dom_id + '">' + spinner_div + '</div>');
-
-                // embed otp iframe
-
-                let embed_container = document.getElementById(embed_dom_id);
-
-                getotp_object.embedOtpForm(embed_url, embed_container);
-
-                setDefaultStyle(embed_mode);
-
-                modal.open();
-            }
+            
         }
 
         getotp_object.showModal = function (otp_url) {
@@ -360,7 +392,7 @@
             this.initModal(embed_url);
         }
 
-        getotp_object.hideModal = function (otp_url) {
+        getotp_object.closeModal = function (otp_url) {
             if (this.active_modal) {
                 this.active_modal.close();
             }
@@ -409,6 +441,23 @@
             return true;
         }
 
+        getotp_object.reloadSticky = function () {
+            let embed_url = sessionStorage.getItem(this.settings.url_storage_key);
+
+            if (!embed_url) {
+                console.error('No previous otp form url define in session storage with key ' + this.settings.url_storage_key);
+                return;
+            }
+
+            this.initSticky(embed_url);
+
+            return true;
+        }
+
+        // end sticky form
+
+        // API client
+
         getotp_object.connect = function (body_payload, auth_payload) {
 
             let success_redirect_url = body_payload.success_redirect_url;
@@ -448,51 +497,38 @@
             return api_call;
         }
 
-        getotp_object.reloadSticky = function () {
-            let embed_url = sessionStorage.getItem(this.settings.url_storage_key);
-
-            if (!embed_url) {
-                console.error('No previous otp form url define in session storage with key ' + this.settings.url_storage_key);
-                return;
-            }
-
-            this.initSticky(embed_url);
-
-            return true;
-        }
-
-        // end sticky form
-
-        getotp_object.handleKeypressCallback = function (keycode) {
-            // if user press escape
-            if (keycode == 27) {
-                if (this.embed_type == 'modal') {
-                    this.hideModal();
-                }
-                else {
-                    // do something
-                }
-
-                initClientCallback('keypressCallback', { 'keycode': keycode });
-            }
-        }
-
-        getotp_object.updateIframeHeight = function (embed_height) {
-
-            let px_embed_height = embed_height + 'px';
-
-            let iframe = document.getElementById('getotp_iframe');
-
-            iframe.style.height = embed_height + 'px';
-
-            console.log('update iframe height', px_embed_height);
-            this.embed_height = px_embed_height;
-
-            initClientCallback('otpAfterLoad', {});
-        }
+        // end API client
 
         getotp_object.getEmbedHeight = function () {
             return this.embed_height;
+        }
+
+        // client callback
+
+        getotp_object.onOpenModal = function (callback) {
+
+            let self = this;
+
+            window.addEventListener('onOpenModal', function (e) {
+
+                let payload = e.detail;
+
+                callback(payload);
+
+            });
+        }
+
+        getotp_object.onCloseModal = function (callback) {
+
+            let self = this;
+
+            window.addEventListener('onCloseModal', function (e) {
+
+                let payload = e.detail;
+
+                callback(payload);
+
+            });
         }
 
         getotp_object.onSuccess = function (callback) {
@@ -504,7 +540,7 @@
                 let payload = e.detail;
 
                 callback(payload);
-                
+
             });
         }
 
@@ -520,6 +556,8 @@
 
             });
         }
+
+        // end client callback
 
         // for development purpose
 
