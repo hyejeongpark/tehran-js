@@ -2,8 +2,6 @@
 
 <head>
     <title>Demo site</title>
-
-    <!-- <link rel="stylesheet" href="../dist/getotp_modal.min.css"> -->
 </head>
 
 <body>
@@ -27,11 +25,20 @@
         integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
     <!-- update this base on your directory -->
     <script src="../dist/getotp.min.js"></script>
-    <!-- <script src="../dist/getotp_modal.min.js"></script> -->
 
     <script type="text/javascript">
 
         $(function () {
+
+            // init GETOTP options
+
+            getotp.init({ 'dev_mode': true });
+
+            // since http://localhost:8090 is not a trusted origin, add the domain as trusted origin
+            // you likely dont need this except when developing on local GetOTP server
+
+            getotp.addOrigin('http://localhost:8090');
+
 
             $("#verify_btn_modal").click(function () {
                 backendVerify('modal');
@@ -44,6 +51,8 @@
             $("#verify_btn_embed").click(function () {
                 backendVerify('embed');
             });
+
+            // getotp.init({ 'dev_mode': true, });
 
             // dummy API call to backend. replace with your API call
             function backendVerify(embed_type) {
@@ -70,18 +79,11 @@
                 // dummy API response. 
                 // Your backend API is expect to return the `link` and `otp_id`
                 var api_response = {
-                    'link': 'http://localhost:8090/api/ui/verify/bj2knsi8ypympgidfzvd/email/',
-                    'otp_id': 'bj2knsi8ypympgidfzvd',
+                    'link': 'http://localhost:8090/api/ui/verify/0intdwmsyhpaxk3qtg4w/email/',
+                    'otp_id': '0intdwmsyhpaxk3qtg4w',
                 };
 
                 var otp_url = api_response.link;
-
-                // since http://localhost:8090 is not a trusted origin, add the domain as trusted origin
-                // you likely dont need this except when developing on local GetOTP server
-
-                getotp.init({ 'dev_mode': true, });
-
-                getotp.addOrigin('http://localhost:8090');
 
                 if (embed_type == 'modal') {
                     getotp.showModal(otp_url);
@@ -114,7 +116,7 @@
 
                     console.log('otp verification success');
 
-                    getotp.closeModal();
+                    // getotp.closeModal();
                 });
 
                 getotp.onFailed(function (payload) {
