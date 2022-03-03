@@ -10,12 +10,22 @@ Under development, do not use for production
 <body>
 ...
 <script src="js/getotp.min.js"></script>
+<!-- or you can load the script hosted at Tehran -->
 </body>
 ```
 
-2) Get the `otp_id` and `link` property from the Tehran API response and return to the Front End
+2) Once document ready, initialize the script. All dependencies will be automatically loaded.
 
-3) Show the OTP modal
+```
+<script>
+    // once document ready, init
+    getotp.init();
+</script>
+```
+
+3) Get the `otp_id` and `link` property from the Tehran API response and return to the Front End
+
+4) Show the OTP modal
 
 ```
 var otp_url = response.link;
@@ -24,45 +34,43 @@ var otp_url = response.link;
 getotp.showModal(otp_url);
 ```
 
-4) Manually hide the modal
+5) Manually close the modal
 
 ```
-getotp.hideModal();
+getotp.closeModal();
 ```
 
-## HANDLING OTP SUCCESS and OTP FAILED CALLBACK
+## HANDLING OTP SUCCESS & OTP FAILED CALLBACK
 
 1) Once the OTP process has been completed, client will receive a callback
 
-2) To handle OTP success, developer need to define inside the script `otpSuccess(payload)`
+2) To handle OTP success, developer need to listen to the `onSuccess` event
 
 ```
-function otpSuccess(payload) {
+getotp.onSuccess(function (payload) {
 
-    let callback_otp_id = payload.otp_id;
-    let redirect_url = payload.redirect_url;
+    var callback_otp_id = payload.otp_id;
+    var redirect_url = payload.redirect_url;
 
     // do something
-}
 
-window.otpSuccess = otpSuccess;
+    // getotp.closeModal();
+});
 ```
 
-3) To handle OTP failed, developer need to define inside the script `otpFailed(payload)`
+3) To handle OTP failed, developer need to listen to the `onFailed` event
 
 ```
-function otpFailed(payload) {
+getotp.onFailed(function (payload) {
 
-    let callback_otp_id = payload.otp_id;
-    let redirect_url = payload.redirect_url;
+    var callback_otp_id = payload.otp_id;
+    var redirect_url = payload.redirect_url;
 
     // do something
-}
 
-window.otpFailed = otpFailed;
+    // getotp.closeModal();
+});
 ```
-
-4) To customize the callback function name, refer the CUSTOMIZE OPTIONS section below
 
 ## ADD TRUSTED ORIGIN
 
@@ -76,11 +84,24 @@ getotp.addOrigin('http://localhost:8080');
 getotp.showModal(otp_url);
 ```
 
-## MANUALLY EMBED OTP
+## AVAILABLE UI MODE
 
-Developer can manually embed the OTP form without using provided modal
+1) The script support 2 UI mode with value 'modal' or 'embed'. Default is 'modal' mode
+
+2) To use embed mode, just set the `ui_mode` on script init
 
 ```
+getotp.init({ 'ui_mode': 'embed' });
+```
+
+## MANUALLY EMBED OTP
+
+With `ui_mode` with value `embed`, developer can manually embed the OTP form without using provided modal
+
+```
+
+getotp.init({ 'ui_mode': 'embed' });
+
 // specify dom element to embed
 var dom_element = document.getElementById('embed_div');
 
@@ -102,119 +123,15 @@ getotp.reloadEmbed();
 
 ## CUSTOMIZE OPTIONS
 
-1) Before calling `getotp.showModal(otp_url)`, developer can use init to customize the settings
+1) Developer can use init to customize the settings
 
 ```
 
 var custom_settings = {
-    'iframe_container_id': 'getotp_iframe_parent',
-    'iframe_container_class': '',
-    'iframe_id': 'getotp_iframe',
-    'iframe_class': '',
-    'success_callback_function': 'otpSuccess',
-    'failed_callback_function': 'otpFailed',
+    'ui_mode': 'modal',
     'url_storage_key': 'getotp_form_url',
+    'dev_mode': false
 };
 
 getotp.init(custom_settings);
-
-// show the otp modal
-getotp.showModal(otp_url);
-```
-
-## USAGE WITH AJAX EXAMPLES
-
-1) With jQuery Ajax
-
-```
-function submitVerify() {
-    
-    var payload = { 
-        amount: 200,
-        trans_id: 'asd4i4sd123'
-    };
-
-    var api_url = 'https://yoursite.test/transfers/verify/';
-    
-    return $.ajax({
-            method: "POST",
-            url: api_url,
-            data: payload
-        })
-        .done(function( response ) {
-            var otp_id = response.otp_id;
-            var otp_url = response.link;
-
-            // show the OTP modal
-            getotp.showModal(otp_url);
-        });
-}
-
-// trigger
-submitVerify();
-```
-
-2) With Axios
-
-```
-function submitVerify() {
-
-    var payload = { 
-        amount: 200,
-        trans_id: 'asd4i4sd123'
-    };
-
-    var api_url = 'https://yoursite.test/transfers/verify/';
-
-    return axios
-        .post(api_url, payload)
-        .then(response => {
-            var otp_id = response.otp_id;
-            var otp_url = response.link;
-
-            // show the OTP modal
-            getotp.showModal(otp_url);
-        })
-}
-
-// trigger
-submitVerify();
-```
-
-3) With Fetch
-
-```
-
-function submitVerify() {
-
-    let payload = { 
-        amount: 200,
-        trans_id: 'asd4i4sd123'
-    };
-
-    let api_url = 'https://yoursite.test/transfers/verify/';
-
-    fetch(api_url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-    })
-    .then(response => response.json())
-    .then(data => {
-
-        let otp_id = data.otp_id;
-        let otp_url = data.link;
-
-        // show the OTP modal
-        getotp.showModal(otp_url);
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-    });
-}
-
-// trigger
-submitVerify();
 ```
