@@ -15,7 +15,7 @@
             'dev_mode': false
         };
 
-        var getotp_object = {
+        var _getotp = {
             'settings': settings,
             'iframe_settings': {
                 'iframe_container_id': 'getotp_iframe_parent',
@@ -37,7 +37,7 @@
 
         // use init to custom config
 
-        getotp_object.init = function (options) {
+        _getotp.init = function (options) {
 
             for (var key in options) {
                 if (this.settings.hasOwnProperty(key)) {
@@ -61,13 +61,13 @@
 
             var iframe_container = document.createElement('div');
 
-            iframe_container.setAttribute("id", getotp_object.iframe_settings.iframe_container_id);
-            iframe_container.setAttribute("class", getotp_object.iframe_settings.iframe_container_class);
+            iframe_container.setAttribute("id", _getotp.iframe_settings.iframe_container_id);
+            iframe_container.setAttribute("class", _getotp.iframe_settings.iframe_container_class);
 
             var iframe = document.createElement('iframe');
 
-            iframe.setAttribute("id", getotp_object.iframe_settings.iframe_id);
-            iframe.setAttribute("class", getotp_object.iframe_settings.iframe_class);
+            iframe.setAttribute("id", _getotp.iframe_settings.iframe_id);
+            iframe.setAttribute("class", _getotp.iframe_settings.iframe_class);
 
             iframe_container.appendChild(iframe);
 
@@ -82,7 +82,7 @@
 
             embed_container.appendChild(iframe_container);
 
-            var self = getotp_object;
+            var self = _getotp;
 
             iframe.addEventListener("load", function () {
 
@@ -106,7 +106,7 @@
 
             console.log('update iframe height', px_embed_height);
 
-            getotp_object.embed_height = px_embed_height;
+            _getotp.embed_height = px_embed_height;
 
             fireEvent('onOtpAfterLoad', {});
         }
@@ -129,10 +129,10 @@
                 }
             });
 
-            getotp_object.active_modal = modal;
+            _getotp.active_modal = modal;
 
-            var embed_dom_id = getotp_object.embed_dom_id;
-            var modal_spinner_id = getotp_object.modal_spinner_id;
+            var embed_dom_id = _getotp.embed_dom_id;
+            var modal_spinner_id = _getotp.modal_spinner_id;
 
             var spinner = '<svg width="38" height="38" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg" stroke="#000"> <g fill="none" fill-rule="evenodd"> <g transform="translate(1 1)" stroke-width="2"> <circle stroke-opacity=".5" cx="18" cy="18" r="18" /> <path d="M36 18c0-9.94-8.06-18-18-18"> <animateTransform attributeName="transform" type="rotate" from="0 18 18" to="360 18 18" dur="1s" repeatCount="indefinite" /> </path> </g> </g> </svg>';
 
@@ -155,8 +155,8 @@
 
             // load JS
 
-            getotp_object.is_loading_script = true;
-            getotp_object.is_script_loaded = false;
+            _getotp.is_loading_script = true;
+            _getotp.is_script_loaded = false;
 
             var script_url = getAssetUrl('getotp_modal.min.js');
 
@@ -167,8 +167,8 @@
                 var style_url = getAssetUrl('getotp_modal.min.css');
 
                 loadStylesheet(style_url, function () {
-                    getotp_object.is_loading_script = false;
-                    getotp_object.is_script_loaded = true;
+                    _getotp.is_loading_script = false;
+                    _getotp.is_script_loaded = true;
                     fireEvent('modalScriptLoaded', {});
                 });
             });
@@ -197,8 +197,8 @@
 
         function getStyle() {
 
-            if (getotp_object.settings.ui_mode === 'sticky') {
-                return 'div#' + getotp_object.iframe_settings.iframe_container_id + ' { position: fixed; bottom: 0; width: 100%; background-color: white; }';
+            if (_getotp.settings.ui_mode === 'sticky') {
+                return 'div#' + _getotp.iframe_settings.iframe_container_id + ' { position: fixed; bottom: 0; width: 100%; background-color: white; }';
             }
 
             return null;
@@ -226,8 +226,8 @@
         function handleKeypressCallback(keycode) {
             // if user press escape
             if (keycode == 27) {
-                if (getotp_object.settings.ui_mode == 'modal') {
-                    getotp_object.closeModal();
+                if (_getotp.settings.ui_mode == 'modal') {
+                    _getotp.closeModal();
                 } else {
                     // do something
                 }
@@ -269,7 +269,7 @@
 
         function getBaseUrl() {
 
-            var parse_origin = new URL(getotp_object.script_origin);
+            var parse_origin = new URL(_getotp.script_origin);
 
             var base_url = parse_origin.origin;
 
@@ -285,7 +285,7 @@
                 path = '/static/css/';
             }
 
-            if (getotp_object.settings.dev_mode) {
+            if (_getotp.settings.dev_mode) {
                 path = '/dist/';
             }
 
@@ -306,7 +306,7 @@
 
         /* event listener */
 
-        getotp_object.getotpServerMessage = function (event) {
+        _getotp.getotpServerMessage = function (event) {
             console.log("event", event);
 
             // Check sender origin to be trusted
@@ -314,7 +314,7 @@
             var client_origin = window.location.origin;
 
             if (event.origin != client_origin) {
-                if (!getotp_object['trusted_origins'].includes(event.origin)) {
+                if (!_getotp['trusted_origins'].includes(event.origin)) {
                     console.error('Server callback failed because event origin ' + event.origin + ' is not define inside trusted_origins');
                     return;
                 }
@@ -322,8 +322,8 @@
 
             var data = event.data;
 
-            if (typeof getotp_object[data.func] == "function") {
-                getotp_object[data.func].call(null, data.message);
+            if (typeof _getotp[data.func] == "function") {
+                _getotp[data.func].call(null, data.message);
             }
         };
 
@@ -332,19 +332,19 @@
         /* server callback */
 
         // callback from message listener, doesnt have access to this scope because under window scope
-        getotp_object.iframeHeightCallback = function (message) {
+        _getotp.iframeHeightCallback = function (message) {
             var embed_height = message.embed_height;
 
             updateIframeHeight(embed_height);
         };
 
-        getotp_object.keyPressCallback = function (message) {
+        _getotp.keyPressCallback = function (message) {
             var keycode = message.keycode;
 
             handleKeypressCallback(keycode);
         };
 
-        getotp_object.otpClientCallback = function (message) {
+        _getotp.otpClientCallback = function (message) {
 
             var otp_id = message.otp_id;
             var status = message.status;
@@ -374,7 +374,7 @@
             setDefaultStyle();
         }
 
-        getotp_object.showEmbed = function (otp_url, embed_container) {
+        _getotp.showEmbed = function (otp_url, embed_container) {
 
             var embed_url = prepareEmbedUrl(otp_url);
 
@@ -386,7 +386,7 @@
             return true;
         };
 
-        getotp_object.reloadEmbed = function (embed_container) {
+        _getotp.reloadEmbed = function (embed_container) {
             var embed_url = sessionStorage.getItem(this.settings.url_storage_key);
 
             if (!embed_url) {
@@ -403,11 +403,11 @@
 
         function initModal(embed_url) {
 
-            if (getotp_object.is_script_loaded) {
+            if (_getotp.is_script_loaded) {
                 loadModal(embed_url);
             } else {
 
-                if (!getotp_object.is_loading_script) {
+                if (!_getotp.is_loading_script) {
                     enqueueModalScripts();
                 }
 
@@ -417,7 +417,7 @@
             }
         }
 
-        getotp_object.showModal = function (otp_url) {
+        _getotp.showModal = function (otp_url) {
 
             var embed_url = prepareEmbedUrl(otp_url);
 
@@ -427,13 +427,13 @@
             initModal(embed_url);
         };
 
-        getotp_object.closeModal = function (otp_url) {
+        _getotp.closeModal = function (otp_url) {
             if (this.active_modal) {
                 this.active_modal.close();
             }
         };
 
-        getotp_object.reloadModal = function () {
+        _getotp.reloadModal = function () {
             var embed_url = sessionStorage.getItem(this.settings.url_storage_key);
 
             if (!embed_url) {
@@ -459,7 +459,7 @@
             setDefaultStyle();
         }
 
-        getotp_object.showSticky = function (otp_url) {
+        _getotp.showSticky = function (otp_url) {
 
             var embed_url = prepareEmbedUrl(otp_url);
 
@@ -471,7 +471,7 @@
             return true;
         };
 
-        getotp_object.reloadSticky = function () {
+        _getotp.reloadSticky = function () {
             var embed_url = sessionStorage.getItem(this.settings.url_storage_key);
 
             if (!embed_url) {
@@ -488,7 +488,7 @@
 
         // API client
 
-        getotp_object.connect = function (body_payload, auth_payload) {
+        _getotp.connect = function (body_payload, auth_payload) {
 
             var success_redirect_url = body_payload.success_redirect_url;
             var fail_redirect_url = body_payload.fail_redirect_url;
@@ -531,13 +531,13 @@
 
         // end API client
 
-        getotp_object.getEmbedHeight = function () {
+        _getotp.getEmbedHeight = function () {
             return this.embed_height;
         };
 
         // client callback
 
-        getotp_object.onOpenModal = function (callback) {
+        _getotp.onOpenModal = function (callback) {
 
             var self = this;
 
@@ -549,7 +549,7 @@
             });
         };
 
-        getotp_object.onCloseModal = function (callback) {
+        _getotp.onCloseModal = function (callback) {
 
             var self = this;
 
@@ -561,7 +561,7 @@
             });
         };
 
-        getotp_object.onSuccess = function (callback) {
+        _getotp.onSuccess = function (callback) {
 
             var self = this;
 
@@ -573,7 +573,7 @@
             });
         };
 
-        getotp_object.onFailed = function (callback) {
+        _getotp.onFailed = function (callback) {
 
             var self = this;
 
@@ -589,17 +589,17 @@
 
         // for development purpose
 
-        getotp_object.addOrigin = function (origin) {
+        _getotp.addOrigin = function (origin) {
             origin = origin.replace(/\/$/, '');
             this.trusted_origins.push(origin);
             return this.trusted_origins;
         };
 
-        getotp_object.clearSession = function () {
+        _getotp.clearSession = function () {
             sessionStorage.removeItem(this.settings.url_storage_key);
         };
 
-        return getotp_object;
+        return _getotp;
     }
 
     // We need that our library is globally accesible, then we save in the window
