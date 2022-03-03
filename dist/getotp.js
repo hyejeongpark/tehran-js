@@ -10,7 +10,7 @@
         // initial object
 
         var settings = {
-            'ui_mode': 'modal', //modal / embed / sticky
+            'ui_mode': 'modal', // modal / embed / sticky
             'url_storage_key': 'getotp_form_url',
             'dev_mode': false
         };
@@ -25,6 +25,7 @@
             },
             'trusted_origins': ['https://otp.dev'],
             'is_loading_script': false,
+            'is_script_loaded': false,
             'active_modal': null,
             'embed_height': null,
             'embed_dom_id': 'getotp_modal_embed_body',
@@ -53,6 +54,47 @@
         // end use init to custom config
 
         // business logic
+
+        function embedOtpForm(otp_url, embed_container) {
+
+            fireEvent('onOtpBeforeLoad', {});
+
+            var iframe_container = document.createElement('div');
+
+            iframe_container.setAttribute("id", getotp_object.iframe_settings.iframe_container_id);
+            iframe_container.setAttribute("class", getotp_object.iframe_settings.iframe_container_class);
+
+            var iframe = document.createElement('iframe');
+
+            iframe.setAttribute("id", getotp_object.iframe_settings.iframe_id);
+            iframe.setAttribute("class", getotp_object.iframe_settings.iframe_class);
+
+            iframe_container.appendChild(iframe);
+
+            // TODO: show loading before fetch the url
+            console.log('iframe.src', otp_url);
+
+            iframe.src = otp_url;
+            iframe.width = '100%';
+            iframe.style.border = 'none';
+
+            console.log('embed_container', embed_container);
+
+            embed_container.appendChild(iframe_container);
+
+            var self = getotp_object;
+
+            iframe.addEventListener("load", function () {
+
+                // remove modal spinner
+
+                var modal_spinner = document.getElementById(self.modal_spinner_id);
+
+                if (modal_spinner) {
+                    modal_spinner.parentNode.removeChild(modal_spinner);
+                }
+            });
+        }
 
         function updateIframeHeight(embed_height) {
 
@@ -102,7 +144,7 @@
 
             var embed_container = document.getElementById(embed_dom_id);
 
-            getotp_object.embedOtpForm(embed_url, embed_container);
+            embedOtpForm(embed_url, embed_container);
 
             setDefaultStyle();
 
@@ -114,6 +156,7 @@
             // load JS
 
             getotp_object.is_loading_script = true;
+            getotp_object.is_script_loaded = false;
 
             var script_url = getAssetUrl('getotp_modal.min.js');
 
@@ -125,6 +168,7 @@
 
                 loadStylesheet(style_url, function () {
                     getotp_object.is_loading_script = false;
+                    getotp_object.is_script_loaded = true;
                     fireEvent('modalScriptLoaded', {});
                 });
             });
@@ -321,55 +365,14 @@
 
         /* end server callback */
 
-        getotp_object.embedOtpForm = function (otp_url, embed_container) {
-
-            fireEvent('onOtpBeforeLoad', {});
-
-            var iframe_container = document.createElement('div');
-
-            iframe_container.setAttribute("id", this.iframe_settings.iframe_container_id);
-            iframe_container.setAttribute("class", this.iframe_settings.iframe_container_class);
-
-            var iframe = document.createElement('iframe');
-
-            iframe.setAttribute("id", this.iframe_settings.iframe_id);
-            iframe.setAttribute("class", this.iframe_settings.iframe_class);
-
-            iframe_container.appendChild(iframe);
-
-            // TODO: show loading before fetch the url
-            console.log('iframe.src', otp_url);
-
-            iframe.src = otp_url;
-            iframe.width = '100%';
-            iframe.style.border = 'none';
-
-            console.log('embed_container', embed_container);
-
-            embed_container.appendChild(iframe_container);
-
-            var self = this;
-
-            iframe.addEventListener("load", function () {
-
-                // remove modal spinner
-
-                var modal_spinner = document.getElementById(self.modal_spinner_id);
-
-                if (modal_spinner) {
-                    modal_spinner.parentNode.removeChild(modal_spinner);
-                }
-            });
-        };
-
         // manual position form
 
-        getotp_object.initEmbed = function (embed_url, embed_container) {
+        function initEmbed(embed_url, embed_container) {
 
-            this.embedOtpForm(embed_url, embed_container);
+            embedOtpForm(embed_url, embed_container);
 
             setDefaultStyle();
-        };
+        }
 
         getotp_object.showEmbed = function (otp_url, embed_container) {
 
@@ -378,7 +381,7 @@
             // save otp url for reload purpose
             sessionStorage.setItem(this.settings.url_storage_key, embed_url);
 
-            this.initEmbed(embed_url, embed_container);
+            initEmbed(embed_url, embed_container);
 
             return true;
         };
@@ -391,21 +394,20 @@
                 return;
             }
 
-            this.initEmbed(embed_url, embed_container);
+            initEmbed(embed_url, embed_container);
         };
 
         // end manual position form
 
         // modal form
 
-        getotp_object.initModal = function (embed_url) {
-            if (typeof tingle != 'undefined') {
+        function initModal(embed_url) {
+
+            if (getotp_object.is_script_loaded) {
                 loadModal(embed_url);
             } else {
 
-                console.log('this.is_loading_script', this.is_loading_script);
-
-                if (!this.is_loading_script) {
+                if (!getotp_object.is_loading_script) {
                     enqueueModalScripts();
                 }
 
@@ -413,7 +415,7 @@
                     loadModal(embed_url);
                 });
             }
-        };
+        }
 
         getotp_object.showModal = function (otp_url) {
 
@@ -422,7 +424,7 @@
             // save otp url for reload purpose
             sessionStorage.setItem(this.settings.url_storage_key, embed_url);
 
-            this.initModal(embed_url);
+            initModal(embed_url);
         };
 
         getotp_object.closeModal = function (otp_url) {
@@ -439,7 +441,7 @@
                 return;
             }
 
-            this.initModal(embed_url);
+            initModal(embed_url);
 
             return true;
         };
@@ -448,14 +450,14 @@
 
         // sticky form
 
-        getotp_object.initSticky = function (embed_url) {
+        function initSticky(embed_url) {
 
             var embed_container = document.body;
 
-            this.embedOtpForm(embed_url, embed_container);
+            embedOtpForm(embed_url, embed_container);
 
             setDefaultStyle();
-        };
+        }
 
         getotp_object.showSticky = function (otp_url) {
 
@@ -464,7 +466,7 @@
             // save otp url for reload purpose
             sessionStorage.setItem(this.settings.url_storage_key, embed_url);
 
-            this.initSticky(embed_url);
+            initSticky(embed_url);
 
             return true;
         };
@@ -477,7 +479,7 @@
                 return;
             }
 
-            this.initSticky(embed_url);
+            initSticky(embed_url);
 
             return true;
         };
