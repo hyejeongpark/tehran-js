@@ -41,19 +41,49 @@
 
             for (let key in options) {
                 if (this.settings.hasOwnProperty(key)) {
-                    this.settings[key] = options[key];
+                    if (isValidOption(key, options)) {
+                        this.settings[key] = options[key];
+                    }
                 }
             }
 
             // load modal script and CSS
             if (this.settings.ui_mode === 'modal') {
-                enqueueModalScripts();
+
+                if (!this.is_loading_script && !this.is_script_loaded) {
+                    enqueueModalScripts();
+                }
             }
         }
 
         // end use init to custom config
 
         // business logic
+
+        function isValidOption(key, options) {
+
+            let value = options[key];
+
+            if (typeof value == "string") {
+                value = value.trim();
+            }
+
+            if (key === 'ui_mode') {
+                let valid_ui_modes = ['modal', 'sticky', 'embed'];
+
+                if (!valid_ui_modes.includes(value)) {
+                    return false;
+                }
+            }
+
+            if (key === 'dev_mode') {
+                if (typeof value != "boolean") {
+                    return false;
+                }
+            }
+
+            return true;
+        }
 
         function embedOtpForm(otp_url, embed_container) {
 
@@ -77,8 +107,6 @@
             iframe.src = otp_url;
             iframe.width = '100%';
             iframe.style.border = 'none';
-
-            console.log('embed_container', embed_container);
 
             embed_container.appendChild(iframe_container);
 
@@ -312,7 +340,6 @@
         /* event listener */
 
         _getotp.getotpServerMessage = function (event) {
-            console.log("event", event);
 
             // Check sender origin to be trusted
 
@@ -374,6 +401,8 @@
         // manual position form
 
         function initEmbed(embed_url, embed_container) {
+
+            _getotp.settings.ui_mode = 'embed';
 
             embedOtpForm(embed_url, embed_container);
 
@@ -458,6 +487,8 @@
         // sticky form
 
         function initSticky(embed_url) {
+
+            _getotp.settings.ui_mode = 'sticky';
 
             let embed_container = document.body;
 
