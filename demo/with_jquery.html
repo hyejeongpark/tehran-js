@@ -1,18 +1,24 @@
 <html>
 
 <head>
-    <title></title>
+    <title>Demo site</title>
 </head>
 
 <body>
 
     <h1>Secure Payment with OTP Verification</h1>
 
+    <div id="embed_container">
+
+    </div>
+
     <form id="myform" action="#">
 
         <h4>Amount: USD10</h4>
 
-        <button id="verify_btn" type="button">Verify with OTP</button>
+        <button id="verify_btn_modal" type="button">Verify with OTP Modal</button>
+        <button id="verify_btn_sticky" type="button">Verify with OTP Sticky Form</button>
+        <button id="verify_btn_embed" type="button">Verify with OTP Embedded Form</button>
     </form>
 
     <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js"
@@ -24,12 +30,32 @@
 
         $(function () {
 
-            $("#verify_btn").click(function () {
-                backendVerify();
+            // init GETOTP options
+
+            getotp.init({ 'dev_mode': true });
+
+            // since http://localhost:8090 is not a trusted origin, add the domain as trusted origin
+            // you likely dont need this except when developing on local GetOTP server
+
+            getotp.addOrigin('http://localhost:8090');
+
+
+            $("#verify_btn_modal").click(function () {
+                backendVerify('modal');
             });
 
+            $("#verify_btn_sticky").click(function () {
+                backendVerify('sticky');
+            });
+
+            $("#verify_btn_embed").click(function () {
+                backendVerify('embed');
+            });
+
+            // getotp.init({ 'dev_mode': true, });
+
             // dummy API call to backend. replace with your API call
-            function backendVerify() {
+            function backendVerify(embed_type) {
 
                 /*
                 var payload = { 
@@ -53,45 +79,58 @@
                 // dummy API response. 
                 // Your backend API is expect to return the `link` and `otp_id`
                 var api_response = {
-                    'link': 'http://localhost:8090/api/ui/verify/k0mzjykezkgozwqj5uat/email/pin/',
-                    'otp_id': 'k0mzjykezkgozwqj5uat',
+                    'link': 'http://localhost:8090/api/ui/verify/0intdwmsyhpaxk3qtg4w/email/',
+                    'otp_id': '0intdwmsyhpaxk3qtg4w',
                 };
 
                 var otp_url = api_response.link;
 
-                // since http://localhost:8090 is not a trusted origin, add the domain as trusted origin
-                // you likely dont need this except when developing on local GetOTP server
+                if (embed_type == 'modal') {
+                    getotp.showModal(otp_url);
+                }
+                else if (embed_type == 'sticky') {
+                    getotp.showSticky(otp_url);
+                }
+                else if (embed_type == 'embed') {
+                    getotp.showEmbed(otp_url, document.getElementById('embed_container'));
+                }
 
-                getotp.addOrigin('http://localhost:8090/');
+                getotp.onOpenModal(function (payload) {
+                    // do something
 
-                getotp.showOtpForm(otp_url);
+                    console.log('after open otp modal');
+                });
+
+                getotp.onCloseModal(function (payload) {
+                    // do something
+
+                    console.log('after close otp modal');
+                });
+
+                getotp.onSuccess(function (payload) {
+
+                    var callback_otp_id = payload.otp_id;
+                    var redirect_url = payload.redirect_url;
+
+                    // do something
+
+                    console.log('otp verification success');
+
+                    // getotp.closeModal();
+                });
+
+                getotp.onFailed(function (payload) {
+
+                    var callback_otp_id = payload.otp_id;
+                    var redirect_url = payload.redirect_url;
+
+                    // do something
+
+                    console.log('otp verification failed');
+
+                    getotp.closeModal();
+                });
             }
-
-            /* handle callback */
-
-            function otpSuccess(payload) {
-                var callback_otp_id = payload.otp_id;
-                var redirect_url = payload.redirect_url;
-
-                // do something
-
-                console.log('otp verification success');
-            }
-
-            window.otpSuccess = otpSuccess;
-
-            function otpFailed(payload) {
-                var callback_otp_id = payload.otp_id;
-                var redirect_url = payload.redirect_url;
-
-                // do something
-
-                console.log('otp verification failed');
-            }
-
-            window.otpFailed = otpFailed;
-
-            /* end handle callback */
 
 
         });

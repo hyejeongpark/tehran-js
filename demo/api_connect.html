@@ -1,0 +1,192 @@
+<html>
+
+<head>
+    <title>Demo site</title>
+
+    <!-- <link rel="stylesheet" href="../dist/getotp_modal.min.css"> -->
+</head>
+
+<body>
+
+    <h1>Secure Payment with OTP Verification</h1>
+
+    <div id="embed_container">
+
+    </div>
+
+    <form id="myform" action="#" method="POST">
+
+        <h4>Amount: USD10</h4>
+
+        <h3>User Info</h3>
+
+        <div>
+            <label for="user_email">Email address</label>
+
+            <input type="email" name="user_email" id="user_email" value="user@test.com" required>
+        </div>
+
+        <hr>
+
+        <h3>API Info</h3>
+
+        <div>
+            <label for="api_key">API URL</label>
+            <input type="text" name="api_url" id="api_url" value="http://localhost:8090/" required>
+        </div>
+
+        <div>
+            <label for="api_key">API key</label>
+            <input type="text" name="api_key" id="api_key" value="c7kLH3wUiXuxnaeh8WKrqMpvtNZs1FSI" required>
+        </div>
+
+        <div>
+            <label for="api_key">API token</label>
+            <input type="text" name="api_token" id="api_token" value="gmr4sxlu9dc2b561knv8aipzjy7w3h0q" required>
+        </div>
+
+        <hr>
+        
+        <h3>Callback Info</h3>
+
+        <div>
+            <label for="api_key">Success URL</label>
+            <input type="text" name="success_redirect_url" id="success_redirect_url" value="http://larawallet.test/result/" required>
+        </div>
+
+        <div>
+            <label for="api_key">Failed URL</label>
+            <input type="text" name="fail_redirect_url" id="fail_redirect_url" value="http://larawallet.test/result/" required>
+        </div>
+
+        <br>
+        <br>
+
+        <div>
+            <button id="submit" type="submit">Verify with OTP Modal</button>
+            <!-- <button id="verify_btn_modal" type="button">Verify with OTP Modal</button> -->
+        </div>
+
+        
+
+    </form>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js"
+        integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
+    <!-- update this base on your directory -->
+    <script src="../dist/getotp.min.js"></script>
+    <!-- <script src="../dist/getotp_modal.min.js"></script> -->
+
+    <script type="text/javascript">
+
+        $(function () {
+
+            $("#myform").submit(function (e) {
+                e.preventDefault();
+                verifyWithGetotp();
+            });
+            
+            function verifyWithGetotp() {
+
+                var user_email = $("#user_email").val();
+                var success_redirect_url = $("#success_redirect_url").val();
+                var fail_redirect_url = $("#fail_redirect_url").val();
+
+                var body_data = {
+                    'user_email': user_email,
+                    'success_redirect_url': success_redirect_url,
+                    'fail_redirect_url': fail_redirect_url,
+                };
+
+                var api_url = $("#api_url").val();
+                var api_key = $("#api_key").val();
+                var api_token = $("#api_token").val();
+
+                var auth_data = {
+                    'api_url': api_url,
+                    'api_key': api_key,
+                    'api_token': api_token,
+                };
+
+                // since http://localhost:8090 is not a trusted origin, add the domain as trusted origin
+                // you likely dont need this except when developing on local GetOTP server
+                getotp.init({ 'dev_mode': true, });
+                getotp.addOrigin('http://localhost:8090');
+
+                getotp
+                    .connect(body_data, auth_data)
+                    .then(response => {
+                        var otp_url = response.link;
+                        var otp_id = response.otp_id;
+
+                        console.log('response', response);
+
+                        getotp.showModal(otp_url);
+                    });
+            }
+
+            /* handle callback */
+
+            function otpSuccess(payload) {
+                var callback_otp_id = payload.otp_id;
+                var redirect_url = payload.redirect_url;
+
+                // do something
+
+                console.log('otp verification success');
+            }
+
+            window.otpSuccess = otpSuccess;
+
+            function otpFailed(payload) {
+                var callback_otp_id = payload.otp_id;
+                var redirect_url = payload.redirect_url;
+
+                // do something
+
+                console.log('otp verification failed');
+
+                // getotp.hideModal();
+            }
+
+            window.otpFailed = otpFailed;
+
+            // callback before iframe is load
+            function otpBeforeLoad(payload) {
+                console.log('otpBeforeLoad');
+            }
+
+            window.otpBeforeLoad = otpBeforeLoad;
+
+            // callback after iframe is load
+            function otpAfterLoad(payload) {
+                console.log('otpAfterLoad');
+            }
+
+            window.otpAfterLoad = otpAfterLoad;
+
+            // callback when modal is show
+            function otpModalOpen(payload) {
+                console.log('otpModalOpen');
+            }
+
+            window.otpModalOpen = otpModalOpen;
+
+            // callback after modal was close
+            function otpModalClose(payload) {
+                console.log('otpModalClose');
+            }
+
+            window.otpModalClose = otpModalClose;
+
+            /* end handle callback */
+
+
+        });
+
+
+
+    </script>
+</body>
+
+</html>
