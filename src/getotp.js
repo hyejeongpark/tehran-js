@@ -8,24 +8,24 @@
         // initial object
 
         let settings = {
-            'ui_mode': 'modal',
-            'iframe_container_id': 'getotp_iframe_parent',
-            'iframe_container_class': '',
-            'iframe_id': 'getotp_iframe',
-            'iframe_class': '',
-            'success_callback_function': 'otpSuccess',
-            'failed_callback_function': 'otpFailed',
+            'ui_mode': 'modal', //modal / embed / sticky
             'url_storage_key': 'getotp_form_url',
             'dev_mode': false
         };
 
         let getotp_object = {
             'settings': settings,
+            'iframe_settings': {
+                'iframe_container_id': 'getotp_iframe_parent',
+                'iframe_container_class': '',
+                'iframe_id': 'getotp_iframe',
+                'iframe_class': '',
+            },
             'trusted_origins': [
                 'https://otp.dev',
             ],
+            'is_loading_script': false,
             'active_modal': null,
-            'embed_type': null,
             'embed_height': null,
             'embed_dom_id': 'getotp_modal_embed_body',
             'modal_spinner_id': 'getotp_modal_spinner',
@@ -37,115 +37,22 @@
         // use init to custom config
 
         getotp_object.init = function (options) {
-            console.log('options', options);
 
             for (let key in options) {
                 if (this.settings.hasOwnProperty(key)) {
                     this.settings[key] = options[key];
-
-                    if (key === 'iframe_container_id') {
-                        setDefaultStyle();
-                    }
                 }
             }
 
+            // load modal script and CSS
             if (this.settings.ui_mode === 'modal') {
-
+                enqueueModalScripts();
             }
         }
 
         // end use init to custom config
 
-        // helper
-
-        function enqueueModalScripts() {
-
-            // prepare base url
-
-            let parse_origin = (new URL(getotp_object.script_origin));
-
-            let origin = parse_origin.origin;
-
-            // load CSS
-
-            const style = document.createElement('link');
-
-            style.setAttribute('rel', 'stylesheet');
-            style.setAttribute('type', 'text/css');
-
-            let style_url = origin + '/static/css/getotp_modal.min.css';
-
-            if (getotp_object.settings.dev_mode) {
-                style_url = origin + '/dist/getotp_modal.min.css';
-            }
-
-            style.setAttribute('href', style_url);
-
-            document.getElementsByTagName('head')[0].appendChild(style);
-
-            // load JS
-
-            const script = document.createElement('script');
-
-            script.setAttribute("type", "text/javascript");
-            script.setAttribute("async", true);
-
-            let script_url = origin + '/static/js/getotp_modal.min.js';
-
-            if (getotp_object.settings.dev_mode) {
-                script_url = origin + '/dist/getotp_modal.min.js';
-            }
-
-            script.setAttribute('src', script_url);
-
-            document.body.appendChild(script);
-
-            return script;
-        }
-
-        function prepareStyle(embed_mode) {
-
-            if (embed_mode === 'compact') {
-                return 'div#' + getotp_object.settings.iframe_container_id + ' iframe { border: 0; }';
-            }
-            else {
-                return 'div#' + getotp_object.settings.iframe_container_id + ' { position: fixed; bottom: 0; width: 100%; background-color: white; } div#' + getotp_object.settings.iframe_container_id + ' iframe { border: 0; }';
-            }
-        }
-
-        function setDefaultStyle(embed_mode = 'compact') {
-
-            // create inline style for iframe position
-
-            let style_element = document.createElement('style');
-
-            let css_rules = prepareStyle(embed_mode);
-
-            style_element.appendChild(document.createTextNode(css_rules));
-
-            /* attach to the document head */
-
-            document.getElementsByTagName('head')[0].appendChild(style_element);
-        }
-
-        function prepareEmbedUrl(url, embed_mode = 'compact') {
-            return url + 'pin/?embed_mode=' + embed_mode;
-        }
-
-        function initClientCallback(function_name, payload) {
-            if (typeof (window[function_name]) == "function") {
-                window[function_name].call(null, payload);
-            }
-            else {
-                console.info('Callback function ' + function_name + '(payload) has not been define');
-            }
-        }
-
-        function fireEvent(event_name, payload) {
-            let custom_event = new CustomEvent(event_name, { detail: payload });
-
-            window.dispatchEvent(custom_event);
-        }
+        // business logic
 
         function updateIframeHeight(embed_height) {
 
@@ -162,7 +69,7 @@
             fireEvent('onOtpAfterLoad', {});
         }
 
-        function loadModal(embed_url, embed_mode) {
+        function loadModal(embed_url) {
             let modal = new tingle.modal({
                 footer: false,
                 closeMethods: ['overlay', 'button', 'escape'],
@@ -197,15 +104,86 @@
 
             getotp_object.embedOtpForm(embed_url, embed_container);
 
-            setDefaultStyle(embed_mode);
+            setDefaultStyle();
 
             modal.open();
+        }
+
+        function enqueueModalScripts() {
+
+            // load JS
+
+            getotp_object.is_loading_script = true;
+
+            let script_url = getAssetUrl('getotp_modal.min.js');
+
+            loadScript(script_url, function () {
+
+                // load CSS
+
+                let style_url = getAssetUrl('getotp_modal.min.css');
+
+                loadStylesheet(style_url, function () {
+                    getotp_object.is_loading_script = false;
+                    fireEvent('modalScriptLoaded', {});
+                });
+            });
+        }
+
+        // end business logic
+
+        // helper
+
+        function setDefaultStyle() {
+
+            // create inline style for iframe position
+
+            let style_element = document.createElement('style');
+
+            let css_rules = getStyle();
+
+            if (css_rules) {
+                style_element.appendChild(document.createTextNode(css_rules));
+
+                /* attach to the document head */
+
+                document.getElementsByTagName('head')[0].appendChild(style_element);
+            }
+        }
+
+        function getStyle() {
+
+            if (getotp_object.settings.ui_mode === 'sticky') {
+                return 'div#' + getotp_object.iframe_settings.iframe_container_id + ' { position: fixed; bottom: 0; width: 100%; background-color: white; }';
+            }
+
+            return null;
+        }
+
+        function prepareEmbedUrl(url) {
+            return url + 'pin/';
+        }
+
+        // deprecated
+        function initClientCallback(function_name, payload) {
+            if (typeof (window[function_name]) == "function") {
+                window[function_name].call(null, payload);
+            }
+            else {
+                console.info('Callback function ' + function_name + '(payload) has not been define');
+            }
+        }
+
+        function fireEvent(event_name, payload) {
+            let custom_event = new CustomEvent(event_name, { detail: payload });
+
+            window.dispatchEvent(custom_event);
         }
 
         function handleKeypressCallback(keycode) {
             // if user press escape
             if (keycode == 27) {
-                if (getotp_object.embed_type == 'modal') {
+                if (getotp_object.settings.ui_mode == 'modal') {
                     getotp_object.closeModal();
                 }
                 else {
@@ -214,6 +192,75 @@
             }
 
             fireEvent('onOtpKeypress', { keycode });
+        }
+
+        function loadScript(url, callback) {
+            let script = document.createElement('script');
+
+            script.type = 'text/javascript';
+            script.async = true;
+            script.src = url
+
+            let entry = document.getElementsByTagName('script')[0];
+            entry.parentNode.insertBefore(script, entry);
+
+            if (script.addEventListener)
+                script.addEventListener('load', callback, false);
+            else {
+                script.attachEvent('onreadystatechange', function () {
+                    if (/complete|loaded/.test(script.readyState))
+                        callback();
+                });
+            }
+        }
+
+        function loadStylesheet(url, callback) {
+            let link = document.createElement('link');
+
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = url;
+
+            // Append <link/> tag
+            let entry = document.getElementsByTagName('script')[0];
+            entry.parentNode.insertBefore(link, entry);
+
+            callback();
+        }
+
+        function getBaseUrl() {
+
+            let parse_origin = (new URL(getotp_object.script_origin));
+
+            let base_url = parse_origin.origin;
+
+            return base_url;
+        }
+
+        function getAssetPath(filename) {
+            let file_extension = filename.split('.').pop();
+
+            let path = '/static/js/';
+
+            if (file_extension === 'css') {
+                path = '/static/css/';
+            }
+
+            if (getotp_object.settings.dev_mode) {
+                path = '/dist/';
+            }
+
+            return path;
+        }
+
+        function getAssetUrl(filename) {
+            let base_url = getBaseUrl();
+
+            let path = getAssetPath(filename);
+
+            let asset_url = base_url + path + filename;
+
+            return asset_url;
         }
 
         // end helper
@@ -286,13 +333,13 @@
 
             let iframe_container = document.createElement('div');
 
-            iframe_container.setAttribute("id", this.settings.iframe_container_id);
-            iframe_container.setAttribute("class", this.settings.iframe_container_class);
+            iframe_container.setAttribute("id", this.iframe_settings.iframe_container_id);
+            iframe_container.setAttribute("class", this.iframe_settings.iframe_container_class);
 
             let iframe = document.createElement('iframe');
 
-            iframe.setAttribute("id", this.settings.iframe_id);
-            iframe.setAttribute("class", this.settings.iframe_class);
+            iframe.setAttribute("id", this.iframe_settings.iframe_id);
+            iframe.setAttribute("class", this.iframe_settings.iframe_class);
 
             iframe_container.appendChild(iframe);
 
@@ -301,6 +348,7 @@
 
             iframe.src = otp_url;
             iframe.width = '100%';
+            iframe.style.border = 'none';
 
             console.log('embed_container', embed_container);
 
@@ -324,20 +372,14 @@
 
         getotp_object.initEmbed = function (embed_url, embed_container) {
 
-            let embed_mode = 'compact';
-
-            this.embed_type = 'embed';
-
             this.embedOtpForm(embed_url, embed_container);
 
-            setDefaultStyle(embed_mode);
+            setDefaultStyle();
         }
 
         getotp_object.showEmbed = function (otp_url, embed_container) {
 
-            let embed_mode = 'compact';
-
-            let embed_url = prepareEmbedUrl(otp_url, embed_mode);
+            let embed_url = prepareEmbedUrl(otp_url);
 
             // save otp url for reload purpose
             sessionStorage.setItem(this.settings.url_storage_key, embed_url);
@@ -363,28 +405,26 @@
         // modal form
 
         getotp_object.initModal = function (embed_url) {
-
-            let embed_mode = 'compact';
-
-            this.embed_type = 'modal';
-
             if (typeof (tingle) != 'undefined') {
-                loadModal(embed_url, embed_mode);
+                loadModal(embed_url);
             }
             else {
-                let load_script = enqueueModalScripts();
 
-                load_script.addEventListener('load', () => {
-                    loadModal(embed_url, embed_mode);
+                console.log('this.is_loading_script', this.is_loading_script);
+
+                if (!this.is_loading_script) {
+                    enqueueModalScripts();
+                }
+
+                window.addEventListener('modalScriptLoaded', function (e) {
+                    loadModal(embed_url);
                 });
             }
-            
         }
 
         getotp_object.showModal = function (otp_url) {
 
-            let embed_mode = 'compact';
-            let embed_url = prepareEmbedUrl(otp_url, embed_mode);
+            let embed_url = prepareEmbedUrl(otp_url);
 
             // save otp url for reload purpose
             sessionStorage.setItem(this.settings.url_storage_key, embed_url);
@@ -417,21 +457,16 @@
 
         getotp_object.initSticky = function (embed_url) {
 
-            let embed_mode = 'wide';
-            this.embed_type = 'sticky';
-
             let embed_container = document.body;
 
             this.embedOtpForm(embed_url, embed_container);
 
-            setDefaultStyle(embed_mode);
+            setDefaultStyle();
         }
 
         getotp_object.showSticky = function (otp_url) {
 
-            let embed_mode = 'wide';
-
-            let embed_url = prepareEmbedUrl(otp_url, embed_mode);
+            let embed_url = prepareEmbedUrl(otp_url);
 
             // save otp url for reload purpose
             sessionStorage.setItem(this.settings.url_storage_key, embed_url);
